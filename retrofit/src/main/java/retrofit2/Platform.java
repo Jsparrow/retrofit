@@ -31,12 +31,17 @@ import static java.util.Collections.singletonList;
 
 class Platform {
   private static final Platform PLATFORM = findPlatform();
+private final boolean hasJava8Types;
 
-  static Platform get() {
+Platform(boolean hasJava8Types) {
+    this.hasJava8Types = hasJava8Types;
+  }
+
+static Platform get() {
     return PLATFORM;
   }
 
-  private static Platform findPlatform() {
+private static Platform findPlatform() {
     try {
       Class.forName("android.os.Build");
       if (Build.VERSION.SDK_INT != 0) {
@@ -47,17 +52,11 @@ class Platform {
     return new Platform(true);
   }
 
-  private final boolean hasJava8Types;
-
-  Platform(boolean hasJava8Types) {
-    this.hasJava8Types = hasJava8Types;
-  }
-
-  @Nullable Executor defaultCallbackExecutor() {
+@Nullable Executor defaultCallbackExecutor() {
     return null;
   }
 
-  List<? extends CallAdapter.Factory> defaultCallAdapterFactories(
+List<? extends CallAdapter.Factory> defaultCallAdapterFactories(
       @Nullable Executor callbackExecutor) {
     DefaultCallAdapterFactory executorFactory = new DefaultCallAdapterFactory(callbackExecutor);
     return hasJava8Types
@@ -65,25 +64,25 @@ class Platform {
         : singletonList(executorFactory);
   }
 
-  int defaultCallAdapterFactoriesSize() {
+int defaultCallAdapterFactoriesSize() {
     return hasJava8Types ? 2 : 1;
   }
 
-  List<? extends Converter.Factory> defaultConverterFactories() {
+List<? extends Converter.Factory> defaultConverterFactories() {
     return hasJava8Types
         ? singletonList(OptionalConverterFactory.INSTANCE)
         : emptyList();
   }
 
-  int defaultConverterFactoriesSize() {
+int defaultConverterFactoriesSize() {
     return hasJava8Types ? 1 : 0;
   }
 
-  boolean isDefaultMethod(Method method) {
+boolean isDefaultMethod(Method method) {
     return hasJava8Types && method.isDefault();
   }
 
-  @Nullable Object invokeDefaultMethod(Method method, Class<?> declaringClass, Object object,
+@Nullable Object invokeDefaultMethod(Method method, Class<?> declaringClass, Object object,
       @Nullable Object... args) throws Throwable {
     // Because the service interface might not be public, we need to use a MethodHandle lookup
     // that ignores the visibility of the declaringClass.

@@ -38,14 +38,9 @@ public final class CompletableThrowingTest {
   @Rule public final TestRule resetRule = new RxJavaPluginsResetRule();
   @Rule public final RecordingCompletableObserver.Rule observerRule =
       new RecordingCompletableObserver.Rule();
+private Service service;
 
-  interface Service {
-    @GET("/") Completable completable();
-  }
-
-  private Service service;
-
-  @Before public void setUp() {
+@Before public void setUp() {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
@@ -53,7 +48,7 @@ public final class CompletableThrowingTest {
     service = retrofit.create(Service.class);
   }
 
-  @Test public void throwingInOnCompleteDeliveredToPlugin() {
+@Test public void throwingInOnCompleteDeliveredToPlugin() {
     server.enqueue(new MockResponse());
 
     final AtomicReference<Throwable> errorRef = new AtomicReference<>();
@@ -74,7 +69,7 @@ public final class CompletableThrowingTest {
     assertThat(errorRef.get()).isSameAs(e);
   }
 
-  @Test public void bodyThrowingInOnErrorDeliveredToPlugin() {
+@Test public void bodyThrowingInOnErrorDeliveredToPlugin() {
     server.enqueue(new MockResponse().setResponseCode(404));
 
     final AtomicReference<Throwable> pluginRef = new AtomicReference<>();
@@ -99,7 +94,11 @@ public final class CompletableThrowingTest {
     assertThat(composite.getExceptions()).containsExactly(errorRef.get(), e);
   }
 
-  static abstract class ForwardingCompletableObserver implements CompletableObserver {
+  interface Service {
+    @GET("/") Completable completable();
+  }
+
+  abstract static class ForwardingCompletableObserver implements CompletableObserver {
     private final CompletableObserver delegate;
 
     ForwardingCompletableObserver(CompletableObserver delegate) {

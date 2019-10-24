@@ -36,48 +36,48 @@ import static org.robolectric.annotation.Config.NONE;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = NEWEST_SDK, manifest = NONE)
 public final class OptionalConverterFactoryAndroidTest {
-  interface Service {
-    @GET("/") Call<Optional<Object>> optional();
-    @GET("/") Call<Object> object();
-  }
-
   @Rule public final MockWebServer server = new MockWebServer();
 
-  private Service service;
+	private Service service;
 
-  @Before public void setUp() {
-    Retrofit retrofit = new Retrofit.Builder()
-        .baseUrl(server.url("/"))
-        .addConverterFactory(new ObjectInstanceConverterFactory())
-        .build();
-    service = retrofit.create(Service.class);
-  }
+	@Before public void setUp() {
+	    Retrofit retrofit = new Retrofit.Builder()
+	        .baseUrl(server.url("/"))
+	        .addConverterFactory(new ObjectInstanceConverterFactory())
+	        .build();
+	    service = retrofit.create(Service.class);
+	  }
 
-  @Config(sdk = 24)
-  @Test public void optionalApi24() throws IOException {
-    server.enqueue(new MockResponse());
+	@Config(sdk = 24)
+	  @Test public void optionalApi24() throws IOException {
+	    server.enqueue(new MockResponse());
+	
+	    Optional<Object> optional = service.optional().execute().body();
+	    assertThat(optional).isNotNull();
+	    assertThat(optional.get()).isSameAs(ObjectInstanceConverterFactory.VALUE);
+	  }
 
-    Optional<Object> optional = service.optional().execute().body();
-    assertThat(optional).isNotNull();
-    assertThat(optional.get()).isSameAs(ObjectInstanceConverterFactory.VALUE);
-  }
+	@Config(sdk = 21)
+	  @Test public void optionalPreApi24() {
+	    try {
+	      service.optional();
+	      fail();
+	    } catch (IllegalArgumentException e) {
+	      assertThat(e).hasMessage(
+	          "Unable to create converter for java.util.Optional<java.lang.Object>\n"
+	              + "    for method Service.optional");
+	    }
+	  }
 
-  @Config(sdk = 21)
-  @Test public void optionalPreApi24() {
-    try {
-      service.optional();
-      fail();
-    } catch (IllegalArgumentException e) {
-      assertThat(e).hasMessage(
-          "Unable to create converter for java.util.Optional<java.lang.Object>\n"
-              + "    for method Service.optional");
-    }
-  }
+	@Test public void onlyMatchesOptional() throws IOException {
+	    server.enqueue(new MockResponse());
+	
+	    Object body = service.object().execute().body();
+	    assertThat(body).isSameAs(ObjectInstanceConverterFactory.VALUE);
+	  }
 
-  @Test public void onlyMatchesOptional() throws IOException {
-    server.enqueue(new MockResponse());
-
-    Object body = service.object().execute().body();
-    assertThat(body).isSameAs(ObjectInstanceConverterFactory.VALUE);
+interface Service {
+    @GET("/") Call<Optional<Object>> optional();
+    @GET("/") Call<Object> object();
   }
 }

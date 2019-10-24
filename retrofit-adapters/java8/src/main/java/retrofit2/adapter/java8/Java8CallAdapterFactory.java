@@ -53,39 +53,39 @@ import retrofit2.Retrofit;
  */
 @Deprecated
 public final class Java8CallAdapterFactory extends CallAdapter.Factory {
-  public static Java8CallAdapterFactory create() {
-    return new Java8CallAdapterFactory();
-  }
-
   private Java8CallAdapterFactory() {
-  }
+	  }
 
-  @Override public @Nullable CallAdapter<?, ?> get(
-      Type returnType, Annotation[] annotations, Retrofit retrofit) {
-    if (getRawType(returnType) != CompletableFuture.class) {
-      return null;
-    }
-    if (!(returnType instanceof ParameterizedType)) {
-      throw new IllegalStateException("CompletableFuture return type must be parameterized"
-          + " as CompletableFuture<Foo> or CompletableFuture<? extends Foo>");
-    }
-    Type innerType = getParameterUpperBound(0, (ParameterizedType) returnType);
+	public static Java8CallAdapterFactory create() {
+	    return new Java8CallAdapterFactory();
+	  }
 
-    if (getRawType(innerType) != Response.class) {
-      // Generic type is not Response<T>. Use it for body-only adapter.
-      return new BodyCallAdapter<>(innerType);
-    }
+	@Override public @Nullable CallAdapter<?, ?> get(
+	      Type returnType, Annotation[] annotations, Retrofit retrofit) {
+	    if (getRawType(returnType) != CompletableFuture.class) {
+	      return null;
+	    }
+	    if (!(returnType instanceof ParameterizedType)) {
+	      throw new IllegalStateException("CompletableFuture return type must be parameterized"
+	          + " as CompletableFuture<Foo> or CompletableFuture<? extends Foo>");
+	    }
+	    Type innerType = getParameterUpperBound(0, (ParameterizedType) returnType);
+	
+	    if (getRawType(innerType) != Response.class) {
+	      // Generic type is not Response<T>. Use it for body-only adapter.
+	      return new BodyCallAdapter<>(innerType);
+	    }
+	
+	    // Generic type is Response<T>. Extract T and create the Response version of the adapter.
+	    if (!(innerType instanceof ParameterizedType)) {
+	      throw new IllegalStateException("Response must be parameterized"
+	          + " as Response<Foo> or Response<? extends Foo>");
+	    }
+	    Type responseType = getParameterUpperBound(0, (ParameterizedType) innerType);
+	    return new ResponseCallAdapter<>(responseType);
+	  }
 
-    // Generic type is Response<T>. Extract T and create the Response version of the adapter.
-    if (!(innerType instanceof ParameterizedType)) {
-      throw new IllegalStateException("Response must be parameterized"
-          + " as Response<Foo> or Response<? extends Foo>");
-    }
-    Type responseType = getParameterUpperBound(0, (ParameterizedType) innerType);
-    return new ResponseCallAdapter<>(responseType);
-  }
-
-  private static final class BodyCallAdapter<R> implements CallAdapter<R, CompletableFuture<R>> {
+private static final class BodyCallAdapter<R> implements CallAdapter<R, CompletableFuture<R>> {
     private final Type responseType;
 
     BodyCallAdapter(Type responseType) {

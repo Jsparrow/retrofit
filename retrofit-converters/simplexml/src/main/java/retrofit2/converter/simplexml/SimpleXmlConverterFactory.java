@@ -35,55 +35,57 @@ import retrofit2.Retrofit;
  */
 @Deprecated
 public final class SimpleXmlConverterFactory extends Converter.Factory {
-  /** Create an instance using a default {@link Persister} instance for conversion. */
-  public static SimpleXmlConverterFactory create() {
-    return create(new Persister());
-  }
-
-  /** Create an instance using {@code serializer} for conversion. */
-  public static SimpleXmlConverterFactory create(Serializer serializer) {
-    return new SimpleXmlConverterFactory(serializer, true);
-  }
-
-  /** Create an instance using a default {@link Persister} instance for non-strict conversion. */
-  public static SimpleXmlConverterFactory createNonStrict() {
-    return createNonStrict(new Persister());
-  }
-
-  /** Create an instance using {@code serializer} for non-strict conversion. */
-  @SuppressWarnings("ConstantConditions") // Guarding public API nullability.
-  public static SimpleXmlConverterFactory createNonStrict(Serializer serializer) {
-    if (serializer == null) throw new NullPointerException("serializer == null");
-    return new SimpleXmlConverterFactory(serializer, false);
-  }
-
   private final Serializer serializer;
-  private final boolean strict;
+	private final boolean strict;
 
-  private SimpleXmlConverterFactory(Serializer serializer, boolean strict) {
-    this.serializer = serializer;
-    this.strict = strict;
-  }
+	private SimpleXmlConverterFactory(Serializer serializer, boolean strict) {
+	    this.serializer = serializer;
+	    this.strict = strict;
+	  }
 
-  public boolean isStrict() {
-    return strict;
-  }
+	/** Create an instance using a default {@link Persister} instance for conversion. */
+	  public static SimpleXmlConverterFactory create() {
+	    return create(new Persister());
+	  }
 
-  @Override
-  public Converter<ResponseBody, ?> responseBodyConverter(Type type, Annotation[] annotations,
-      Retrofit retrofit) {
-    if (!(type instanceof Class)) {
-      return null;
-    }
-    Class<?> cls = (Class<?>) type;
-    return new SimpleXmlResponseBodyConverter<>(cls, serializer, strict);
-  }
+	/** Create an instance using {@code serializer} for conversion. */
+	  public static SimpleXmlConverterFactory create(Serializer serializer) {
+	    return new SimpleXmlConverterFactory(serializer, true);
+	  }
 
-  @Override public @Nullable Converter<?, RequestBody> requestBodyConverter(Type type,
-      Annotation[] parameterAnnotations, Annotation[] methodAnnotations, Retrofit retrofit) {
-    if (!(type instanceof Class)) {
-      return null;
-    }
-    return new SimpleXmlRequestBodyConverter<>(serializer);
-  }
+	/** Create an instance using a default {@link Persister} instance for non-strict conversion. */
+	  public static SimpleXmlConverterFactory createNonStrict() {
+	    return createNonStrict(new Persister());
+	  }
+
+	/** Create an instance using {@code serializer} for non-strict conversion. */
+	  @SuppressWarnings("ConstantConditions") // Guarding public API nullability.
+	  public static SimpleXmlConverterFactory createNonStrict(Serializer serializer) {
+	    if (serializer == null) {
+			throw new NullPointerException("serializer == null");
+		}
+	    return new SimpleXmlConverterFactory(serializer, false);
+	  }
+
+	public boolean isStrict() {
+	    return strict;
+	  }
+
+	@Override
+	  public Converter<ResponseBody, ?> responseBodyConverter(Type type, Annotation[] annotations,
+	      Retrofit retrofit) {
+	    if (!(type instanceof Class)) {
+	      return null;
+	    }
+	    Class<?> cls = (Class<?>) type;
+	    return new SimpleXmlResponseBodyConverter<>(cls, serializer, strict);
+	  }
+
+	@Override public @Nullable Converter<?, RequestBody> requestBodyConverter(Type type,
+	      Annotation[] parameterAnnotations, Annotation[] methodAnnotations, Retrofit retrofit) {
+	    if (!(type instanceof Class)) {
+	      return null;
+	    }
+	    return new SimpleXmlRequestBodyConverter<>(serializer);
+	  }
 }

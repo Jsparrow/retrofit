@@ -29,17 +29,10 @@ import retrofit2.http.GET;
 public final class FlowableWithSchedulerTest {
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final RecordingSubscriber.Rule subscriberRule = new RecordingSubscriber.Rule();
+private final TestScheduler scheduler = new TestScheduler();
+private Service service;
 
-  interface Service {
-    @GET("/") Flowable<String> body();
-    @GET("/") Flowable<Response<String>> response();
-    @GET("/") Flowable<Result<String>> result();
-  }
-
-  private final TestScheduler scheduler = new TestScheduler();
-  private Service service;
-
-  @Before public void setUp() {
+@Before public void setUp() {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new StringConverterFactory())
@@ -48,7 +41,7 @@ public final class FlowableWithSchedulerTest {
     service = retrofit.create(Service.class);
   }
 
-  @Test public void bodyUsesScheduler() {
+@Test public void bodyUsesScheduler() {
     server.enqueue(new MockResponse());
 
     RecordingSubscriber<Object> subscriber = subscriberRule.create();
@@ -59,7 +52,7 @@ public final class FlowableWithSchedulerTest {
     subscriber.assertAnyValue().assertComplete();
   }
 
-  @Test public void responseUsesScheduler() {
+@Test public void responseUsesScheduler() {
     server.enqueue(new MockResponse());
 
     RecordingSubscriber<Object> subscriber = subscriberRule.create();
@@ -70,7 +63,7 @@ public final class FlowableWithSchedulerTest {
     subscriber.assertAnyValue().assertComplete();
   }
 
-  @Test public void resultUsesScheduler() {
+@Test public void resultUsesScheduler() {
     server.enqueue(new MockResponse());
 
     RecordingSubscriber<Object> subscriber = subscriberRule.create();
@@ -79,5 +72,11 @@ public final class FlowableWithSchedulerTest {
 
     scheduler.triggerActions();
     subscriber.assertAnyValue().assertComplete();
+  }
+
+  interface Service {
+    @GET("/") Flowable<String> body();
+    @GET("/") Flowable<Response<String>> response();
+    @GET("/") Flowable<Result<String>> result();
   }
 }

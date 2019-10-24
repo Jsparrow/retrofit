@@ -49,15 +49,10 @@ import static org.junit.Assert.assertTrue;
 
 public final class AsyncTest {
   @Rule public final MockWebServer server = new MockWebServer();
+private Service service;
+private List<Throwable> uncaughtExceptions = new ArrayList<>();
 
-  interface Service {
-    @GET("/") Completable completable();
-  }
-
-  private Service service;
-  private List<Throwable> uncaughtExceptions = new ArrayList<>();
-
-  @Before public void setUp() {
+@Before public void setUp() {
     ExecutorService executorService = Executors.newCachedThreadPool(r -> {
       Thread thread = new Thread(r);
       thread.setUncaughtExceptionHandler((t, e) -> uncaughtExceptions.add(e));
@@ -75,11 +70,11 @@ public final class AsyncTest {
     service = retrofit.create(Service.class);
   }
 
-  @After public void tearDown() {
+@After public void tearDown() {
     assertTrue("Uncaught exceptions: " + uncaughtExceptions, uncaughtExceptions.isEmpty());
   }
 
-  @Test public void success() throws InterruptedException {
+@Test public void success() throws InterruptedException {
     TestObserver<Void> observer = new TestObserver<>();
     service.completable().subscribe(observer);
     assertFalse(observer.await(1, SECONDS));
@@ -89,8 +84,7 @@ public final class AsyncTest {
     observer.assertComplete();
   }
 
-
-  @Test public void failure() throws InterruptedException {
+@Test public void failure() throws InterruptedException {
     TestObserver<Void> observer = new TestObserver<>();
     service.completable().subscribe(observer);
     assertFalse(observer.await(1, SECONDS));
@@ -100,7 +94,7 @@ public final class AsyncTest {
     observer.assertError(IOException.class);
   }
 
-  @Test public void throwingInOnCompleteDeliveredToPlugin() throws InterruptedException {
+@Test public void throwingInOnCompleteDeliveredToPlugin() throws InterruptedException {
     server.enqueue(new MockResponse());
 
     final CountDownLatch latch = new CountDownLatch(1);
@@ -124,7 +118,7 @@ public final class AsyncTest {
     assertThat(errorRef.get()).isSameAs(e);
   }
 
-  @Test public void bodyThrowingInOnErrorDeliveredToPlugin() throws InterruptedException {
+@Test public void bodyThrowingInOnErrorDeliveredToPlugin() throws InterruptedException {
     server.enqueue(new MockResponse().setResponseCode(404));
 
     final CountDownLatch latch = new CountDownLatch(1);
@@ -152,7 +146,7 @@ public final class AsyncTest {
     assertThat(composite.getExceptions()).containsExactly(errorRef.get(), e);
   }
 
-  @Test public void bodyThrowingFatalInOnErrorPropagates() throws InterruptedException {
+@Test public void bodyThrowingFatalInOnErrorPropagates() throws InterruptedException {
     server.enqueue(new MockResponse().setResponseCode(404));
 
     final CountDownLatch latch = new CountDownLatch(1);
@@ -169,5 +163,9 @@ public final class AsyncTest {
 
     assertEquals(1, uncaughtExceptions.size());
     assertSame(e, uncaughtExceptions.remove(0));
+  }
+
+  interface Service {
+    @GET("/") Completable completable();
   }
 }

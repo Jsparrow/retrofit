@@ -34,60 +34,60 @@ import retrofit2.http.GET;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public final class GuavaOptionalConverterFactoryTest {
-  interface Service {
-    @GET("/") Call<Optional<Object>> optional();
-    @GET("/") Call<Object> object();
-  }
-
   @Rule public final MockWebServer server = new MockWebServer();
 
-  private Service service;
+	private Service service;
 
-  @Before public void setUp() {
-    Retrofit retrofit = new Retrofit.Builder()
-        .baseUrl(server.url("/"))
-        .addConverterFactory(GuavaOptionalConverterFactory.create())
-        .addConverterFactory(new AlwaysNullConverterFactory())
-        .build();
-    service = retrofit.create(Service.class);
-  }
+	@Before public void setUp() {
+	    Retrofit retrofit = new Retrofit.Builder()
+	        .baseUrl(server.url("/"))
+	        .addConverterFactory(GuavaOptionalConverterFactory.create())
+	        .addConverterFactory(new AlwaysNullConverterFactory())
+	        .build();
+	    service = retrofit.create(Service.class);
+	  }
 
-  @Test public void optional() throws IOException {
-    server.enqueue(new MockResponse());
+	@Test public void optional() throws IOException {
+	    server.enqueue(new MockResponse());
+	
+	    Optional<Object> optional = service.optional().execute().body();
+	    assertThat(optional).isNotNull();
+	    assertThat(optional.isPresent()).isFalse();
+	  }
 
-    Optional<Object> optional = service.optional().execute().body();
-    assertThat(optional).isNotNull();
-    assertThat(optional.isPresent()).isFalse();
-  }
+	@Test public void onlyMatchesOptional() throws IOException {
+	    server.enqueue(new MockResponse());
+	
+	    Object body = service.object().execute().body();
+	    assertThat(body).isNull();
+	  }
 
-  @Test public void onlyMatchesOptional() throws IOException {
-    server.enqueue(new MockResponse());
+	@Test public void delegates() throws IOException {
+	    final Object object = new Object();
+	    Retrofit retrofit = new Retrofit.Builder()
+	        .baseUrl(server.url("/"))
+	        .addConverterFactory(new Converter.Factory() {
+	          @Nullable @Override public Converter<ResponseBody, Object> responseBodyConverter(Type type,
+	              Annotation[] annotations, Retrofit retrofit) {
+	            if (getRawType(type) != Object.class) {
+	              return null;
+	            }
+	            return value -> object;
+	          }
+	        })
+	        .addConverterFactory(GuavaOptionalConverterFactory.create())
+	        .build();
+	
+	    server.enqueue(new MockResponse());
+	
+	    Service service = retrofit.create(Service.class);
+	    Optional<Object> optional = service.optional().execute().body();
+	    assertThat(optional).isNotNull();
+	    assertThat(optional.get()).isSameAs(object);
+	  }
 
-    Object body = service.object().execute().body();
-    assertThat(body).isNull();
-  }
-
-  @Test public void delegates() throws IOException {
-    final Object object = new Object();
-    Retrofit retrofit = new Retrofit.Builder()
-        .baseUrl(server.url("/"))
-        .addConverterFactory(new Converter.Factory() {
-          @Nullable @Override public Converter<ResponseBody, Object> responseBodyConverter(Type type,
-              Annotation[] annotations, Retrofit retrofit) {
-            if (getRawType(type) != Object.class) {
-              return null;
-            }
-            return value -> object;
-          }
-        })
-        .addConverterFactory(GuavaOptionalConverterFactory.create())
-        .build();
-
-    server.enqueue(new MockResponse());
-
-    Service service = retrofit.create(Service.class);
-    Optional<Object> optional = service.optional().execute().body();
-    assertThat(optional).isNotNull();
-    assertThat(optional.get()).isSameAs(object);
+interface Service {
+    @GET("/") Call<Optional<Object>> optional();
+    @GET("/") Call<Object> object();
   }
 }

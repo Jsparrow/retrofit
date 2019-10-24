@@ -29,11 +29,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 public final class KotlinUnitTest {
   @Rule public final MockWebServer server = new MockWebServer();
 
-  interface Service {
-    @GET("/")
-    Call<Unit> empty();
-  }
-
   @Test public void unitOnClasspath() throws IOException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
@@ -47,7 +42,12 @@ public final class KotlinUnitTest {
     assertThat(response.body()).isSameAs(Unit.INSTANCE);
   }
 
-  @Ignore("This is implicitly tested by integration tests of the adapters and converters")
+@Ignore("This is implicitly tested by integration tests of the adapters and converters")
   @Test public void unitMissingFromClasspath() {
+  }
+
+interface Service {
+    @GET("/")
+    Call<Unit> empty();
   }
 }

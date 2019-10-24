@@ -29,17 +29,10 @@ import retrofit2.http.GET;
 public final class ObservableWithSchedulerTest {
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final RecordingObserver.Rule observerRule = new RecordingObserver.Rule();
+private final TestScheduler scheduler = new TestScheduler();
+private Service service;
 
-  interface Service {
-    @GET("/") Observable<String> body();
-    @GET("/") Observable<Response<String>> response();
-    @GET("/") Observable<Result<String>> result();
-  }
-
-  private final TestScheduler scheduler = new TestScheduler();
-  private Service service;
-
-  @Before public void setUp() {
+@Before public void setUp() {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new StringConverterFactory())
@@ -48,7 +41,7 @@ public final class ObservableWithSchedulerTest {
     service = retrofit.create(Service.class);
   }
 
-  @Test public void bodyUsesScheduler() {
+@Test public void bodyUsesScheduler() {
     server.enqueue(new MockResponse());
 
     RecordingObserver<Object> observer = observerRule.create();
@@ -59,7 +52,7 @@ public final class ObservableWithSchedulerTest {
     observer.assertAnyValue().assertComplete();
   }
 
-  @Test public void responseUsesScheduler() {
+@Test public void responseUsesScheduler() {
     server.enqueue(new MockResponse());
 
     RecordingObserver<Object> observer = observerRule.create();
@@ -70,7 +63,7 @@ public final class ObservableWithSchedulerTest {
     observer.assertAnyValue().assertComplete();
   }
 
-  @Test public void resultUsesScheduler() {
+@Test public void resultUsesScheduler() {
     server.enqueue(new MockResponse());
 
     RecordingObserver<Object> observer = observerRule.create();
@@ -79,5 +72,11 @@ public final class ObservableWithSchedulerTest {
 
     scheduler.triggerActions();
     observer.assertAnyValue().assertComplete();
+  }
+
+  interface Service {
+    @GET("/") Observable<String> body();
+    @GET("/") Observable<Response<String>> response();
+    @GET("/") Observable<Result<String>> result();
   }
 }

@@ -47,7 +47,7 @@ import retrofit2.http.Url;
 /** A simple web crawler that uses a Retrofit service to turn URLs into webpages. */
 public final class Crawler {
   private final Set<HttpUrl> fetchedUrls = Collections.synchronizedSet(
-      new LinkedHashSet<HttpUrl>());
+      new LinkedHashSet<>());
   private final ConcurrentHashMap<String, AtomicInteger> hostnames = new ConcurrentHashMap<>();
   private final PageService pageService;
 
@@ -59,33 +59,36 @@ public final class Crawler {
     // Skip hosts that we've visited many times.
     AtomicInteger hostnameCount = new AtomicInteger();
     AtomicInteger previous = hostnames.putIfAbsent(url.host(), hostnameCount);
-    if (previous != null) hostnameCount = previous;
-    if (hostnameCount.incrementAndGet() > 100) return;
+    if (previous != null) {
+		hostnameCount = previous;
+	}
+    if (hostnameCount.incrementAndGet() > 100) {
+		return;
+	}
 
     // Asynchronously visit URL.
     pageService.get(url).enqueue(new Callback<Page>() {
       @Override public void onResponse(Call<Page> call, Response<Page> response) {
         if (!response.isSuccessful()) {
-          System.out.println(call.request().url() + ": failed: " + response.code());
+          System.out.println(new StringBuilder().append(call.request().url()).append(": failed: ").append(response.code()).toString());
           return;
         }
 
         // Print this page's URL and title.
         Page page = response.body();
         HttpUrl base = response.raw().request().url();
-        System.out.println(base + ": " + page.title);
+        System.out.println(new StringBuilder().append(base).append(": ").append(page.title).toString());
 
         // Enqueue its links for visiting.
-        for (String link : page.links) {
-          HttpUrl linkUrl = base.resolve(link);
-          if (linkUrl != null && fetchedUrls.add(linkUrl)) {
-            crawlPage(linkUrl);
-          }
-        }
+		page.links.stream().map(base::resolve).forEach(linkUrl -> {
+			if (linkUrl != null && fetchedUrls.add(linkUrl)) {
+			    crawlPage(linkUrl);
+			  }
+		});
       }
 
       @Override public void onFailure(Call<Page> call, Throwable t) {
-        System.out.println(call.request().url() + ": failed: " + t);
+        System.out.println(new StringBuilder().append(call.request().url()).append(": failed: ").append(t).toString());
       }
     });
   }
@@ -130,7 +133,9 @@ public final class Crawler {
     static final Converter.Factory FACTORY = new Converter.Factory() {
       @Override public @Nullable Converter<ResponseBody, ?> responseBodyConverter(
           Type type, Annotation[] annotations, Retrofit retrofit) {
-        if (type == Page.class) return new PageAdapter();
+        if (type == Page.class) {
+			return new PageAdapter();
+		}
         return null;
       }
     };
@@ -138,9 +143,7 @@ public final class Crawler {
     @Override public Page convert(ResponseBody responseBody) throws IOException {
       Document document = Jsoup.parse(responseBody.string());
       List<String> links = new ArrayList<>();
-      for (Element element : document.select("a[href]")) {
-        links.add(element.attr("href"));
-      }
+      document.select("a[href]").forEach(element -> links.add(element.attr("href")));
       return new Page(document.title(), Collections.unmodifiableList(links));
     }
   }

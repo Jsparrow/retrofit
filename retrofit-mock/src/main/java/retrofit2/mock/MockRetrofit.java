@@ -56,27 +56,37 @@ public final class MockRetrofit {
 
     @SuppressWarnings("ConstantConditions") // Guarding public API nullability.
     public Builder(Retrofit retrofit) {
-      if (retrofit == null) throw new NullPointerException("retrofit == null");
+      if (retrofit == null) {
+		throw new NullPointerException("retrofit == null");
+	}
       this.retrofit = retrofit;
     }
 
     @SuppressWarnings("ConstantConditions") // Guarding public API nullability.
     public Builder networkBehavior(NetworkBehavior behavior) {
-      if (behavior == null) throw new NullPointerException("behavior == null");
+      if (behavior == null) {
+		throw new NullPointerException("behavior == null");
+	}
       this.behavior = behavior;
       return this;
     }
 
     @SuppressWarnings("ConstantConditions") // Guarding public API nullability.
     public Builder backgroundExecutor(ExecutorService executor) {
-      if (executor == null) throw new NullPointerException("executor == null");
+      if (executor == null) {
+		throw new NullPointerException("executor == null");
+	}
       this.executor = executor;
       return this;
     }
 
     public MockRetrofit build() {
-      if (behavior == null) behavior = NetworkBehavior.create();
-      if (executor == null) executor = Executors.newCachedThreadPool();
+      if (behavior == null) {
+		behavior = NetworkBehavior.create();
+	}
+      if (executor == null) {
+		executor = Executors.newCachedThreadPool();
+	}
       return new MockRetrofit(retrofit, behavior, executor);
     }
   }

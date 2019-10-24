@@ -33,16 +33,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 public final class ObservableTest {
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final RecordingObserver.Rule observerRule = new RecordingObserver.Rule();
+private Service service;
 
-  interface Service {
-    @GET("/") Observable<String> body();
-    @GET("/") Observable<Response<String>> response();
-    @GET("/") Observable<Result<String>> result();
-  }
-
-  private Service service;
-
-  @Before public void setUp() {
+@Before public void setUp() {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new StringConverterFactory())
@@ -51,7 +44,7 @@ public final class ObservableTest {
     service = retrofit.create(Service.class);
   }
 
-  @Test public void bodySuccess200() {
+@Test public void bodySuccess200() {
     server.enqueue(new MockResponse().setBody("Hi"));
 
     RecordingObserver<String> observer = observerRule.create();
@@ -59,7 +52,7 @@ public final class ObservableTest {
     observer.assertValue("Hi").assertComplete();
   }
 
-  @Test public void bodySuccess404() {
+@Test public void bodySuccess404() {
     server.enqueue(new MockResponse().setResponseCode(404));
 
     RecordingObserver<String> observer = observerRule.create();
@@ -68,7 +61,7 @@ public final class ObservableTest {
     observer.assertError(HttpException.class, "HTTP 404 Client Error");
   }
 
-  @Test public void bodyFailure() {
+@Test public void bodyFailure() {
     server.enqueue(new MockResponse().setSocketPolicy(DISCONNECT_AFTER_REQUEST));
 
     RecordingObserver<String> observer = observerRule.create();
@@ -76,7 +69,7 @@ public final class ObservableTest {
     observer.assertError(IOException.class);
   }
 
-  @Test public void responseSuccess200() {
+@Test public void responseSuccess200() {
     server.enqueue(new MockResponse());
 
     RecordingObserver<Response<String>> observer = observerRule.create();
@@ -85,7 +78,7 @@ public final class ObservableTest {
     observer.assertComplete();
   }
 
-  @Test public void responseSuccess404() {
+@Test public void responseSuccess404() {
     server.enqueue(new MockResponse().setResponseCode(404));
 
     RecordingObserver<Response<String>> observer = observerRule.create();
@@ -94,7 +87,7 @@ public final class ObservableTest {
     observer.assertComplete();
   }
 
-  @Test public void responseFailure() {
+@Test public void responseFailure() {
     server.enqueue(new MockResponse().setSocketPolicy(DISCONNECT_AFTER_REQUEST));
 
     RecordingObserver<Response<String>> observer = observerRule.create();
@@ -102,7 +95,7 @@ public final class ObservableTest {
     observer.assertError(IOException.class);
   }
 
-  @Test public void resultSuccess200() {
+@Test public void resultSuccess200() {
     server.enqueue(new MockResponse().setBody("Hi"));
 
     RecordingObserver<Result<String>> observer = observerRule.create();
@@ -113,7 +106,7 @@ public final class ObservableTest {
     observer.assertComplete();
   }
 
-  @Test public void resultSuccess404() {
+@Test public void resultSuccess404() {
     server.enqueue(new MockResponse().setResponseCode(404));
 
     RecordingObserver<Result<String>> observer = observerRule.create();
@@ -124,7 +117,7 @@ public final class ObservableTest {
     observer.assertComplete();
   }
 
-  @Test public void resultFailure() {
+@Test public void resultFailure() {
     server.enqueue(new MockResponse().setSocketPolicy(DISCONNECT_AFTER_REQUEST));
 
     RecordingObserver<Result<String>> observer = observerRule.create();
@@ -135,7 +128,7 @@ public final class ObservableTest {
     observer.assertComplete();
   }
 
-  @Test public void observableAssembly() {
+@Test public void observableAssembly() {
     try {
       final Observable<String> justMe = Observable.just("me");
       RxJavaPlugins.setOnObservableAssembly(f -> justMe);
@@ -145,7 +138,7 @@ public final class ObservableTest {
     }
   }
 
-  @Test public void subscribeTwice() {
+@Test public void subscribeTwice() {
     server.enqueue(new MockResponse().setBody("Hi"));
     server.enqueue(new MockResponse().setBody("Hey"));
 
@@ -158,5 +151,11 @@ public final class ObservableTest {
     RecordingObserver<String> observer2 = observerRule.create();
     observable.subscribe(observer2);
     observer2.assertValue("Hey").assertComplete();
+  }
+
+  interface Service {
+    @GET("/") Observable<String> body();
+    @GET("/") Observable<Response<String>> response();
+    @GET("/") Observable<Result<String>> result();
   }
 }

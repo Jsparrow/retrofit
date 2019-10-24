@@ -26,23 +26,6 @@ import retrofit2.http.Path;
 public final class SimpleService {
   public static final String API_URL = "https://api.github.com";
 
-  public static class Contributor {
-    public final String login;
-    public final int contributions;
-
-    public Contributor(String login, int contributions) {
-      this.login = login;
-      this.contributions = contributions;
-    }
-  }
-
-  public interface GitHub {
-    @GET("/repos/{owner}/{repo}/contributors")
-    Call<List<Contributor>> contributors(
-        @Path("owner") String owner,
-        @Path("repo") String repo);
-  }
-
   public static void main(String... args) throws IOException {
     // Create a very simple REST adapter which points the GitHub API.
     Retrofit retrofit = new Retrofit.Builder()
@@ -58,8 +41,23 @@ public final class SimpleService {
 
     // Fetch and print a list of the contributors to the library.
     List<Contributor> contributors = call.execute().body();
-    for (Contributor contributor : contributors) {
-      System.out.println(contributor.login + " (" + contributor.contributions + ")");
+    contributors.forEach(contributor -> System.out.println(new StringBuilder().append(contributor.login).append(" (").append(contributor.contributions).append(")").toString()));
+  }
+
+public static class Contributor {
+    public final String login;
+    public final int contributions;
+
+    public Contributor(String login, int contributions) {
+      this.login = login;
+      this.contributions = contributions;
     }
+  }
+
+  public interface GitHub {
+    @GET("/repos/{owner}/{repo}/contributors")
+    Call<List<Contributor>> contributors(
+        @Path("owner") String owner,
+        @Path("repo") String repo);
   }
 }

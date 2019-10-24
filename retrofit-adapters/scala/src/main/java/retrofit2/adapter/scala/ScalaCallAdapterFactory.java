@@ -47,35 +47,35 @@ import scala.concurrent.Future;
  * </ul>
  */
 public final class ScalaCallAdapterFactory extends CallAdapter.Factory {
-  public static ScalaCallAdapterFactory create() {
-    return new ScalaCallAdapterFactory();
-  }
-
   private ScalaCallAdapterFactory() {
-  }
+	  }
 
-  @Override public @Nullable CallAdapter<?, ?> get(
-      Type returnType, Annotation[] annotations, Retrofit retrofit) {
-    if (getRawType(returnType) != Future.class) {
-      return null;
-    }
-    if (!(returnType instanceof ParameterizedType)) {
-      throw new IllegalStateException(
-          "Future return type must be parameterized as Future<Foo> or Future<? extends Foo>");
-    }
-    Type innerType = getParameterUpperBound(0, (ParameterizedType) returnType);
+	public static ScalaCallAdapterFactory create() {
+	    return new ScalaCallAdapterFactory();
+	  }
 
-    if (getRawType(innerType) != Response.class) {
-      // Generic type is not Response<T>. Use it for body-only adapter.
-      return new BodyCallAdapter<>(innerType);
-    }
-
-    if (!(innerType instanceof ParameterizedType)) {
-      throw new IllegalStateException(
-          "Response must be parameterized as Response<Foo> or Response<? extends Foo>");
-    }
-
-    Type responseType = getParameterUpperBound(0, (ParameterizedType) innerType);
-    return new ResponseCallAdapter<>(responseType);
-  }
+	@Override public @Nullable CallAdapter<?, ?> get(
+	      Type returnType, Annotation[] annotations, Retrofit retrofit) {
+	    if (getRawType(returnType) != Future.class) {
+	      return null;
+	    }
+	    if (!(returnType instanceof ParameterizedType)) {
+	      throw new IllegalStateException(
+	          "Future return type must be parameterized as Future<Foo> or Future<? extends Foo>");
+	    }
+	    Type innerType = getParameterUpperBound(0, (ParameterizedType) returnType);
+	
+	    if (getRawType(innerType) != Response.class) {
+	      // Generic type is not Response<T>. Use it for body-only adapter.
+	      return new BodyCallAdapter<>(innerType);
+	    }
+	
+	    if (!(innerType instanceof ParameterizedType)) {
+	      throw new IllegalStateException(
+	          "Response must be parameterized as Response<Foo> or Response<? extends Foo>");
+	    }
+	
+	    Type responseType = getParameterUpperBound(0, (ParameterizedType) innerType);
+	    return new ResponseCallAdapter<>(responseType);
+	  }
 }

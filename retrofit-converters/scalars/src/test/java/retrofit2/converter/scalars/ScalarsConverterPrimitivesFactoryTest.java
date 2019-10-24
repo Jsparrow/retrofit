@@ -31,7 +31,68 @@ import retrofit2.http.GET;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public final class ScalarsConverterPrimitivesFactoryTest {
-  interface Service {
+  @Rule public final MockWebServer server = new MockWebServer();
+
+	private Service service;
+
+	@Before public void setUp() {
+	    Retrofit retrofit = new Retrofit.Builder()
+	        .baseUrl(server.url("/"))
+	        .addConverterFactory(ScalarsConverterFactory.create())
+	        .addCallAdapterFactory(new DirectCallAdapterFactory())
+	        .build();
+	    service = retrofit.create(Service.class);
+	  }
+
+	@Test public void supportedResponseTypes() throws IOException, InterruptedException {
+	    server.enqueue(new MockResponse().setBody("true"));
+	    boolean booleanResponse = service.booleanPrimitive();
+	    assertThat(booleanResponse).isTrue();
+	
+	    server.enqueue(new MockResponse().setBody("5"));
+	    byte byteResponse = service.bytePrimitive();
+	    assertThat(byteResponse).isEqualTo((byte) 5);
+	
+	    server.enqueue(new MockResponse().setBody("b"));
+	    char characterResponse = service.charPrimitive();
+	    assertThat(characterResponse).isEqualTo('b');
+	
+	    server.enqueue(new MockResponse().setBody(""));
+	    try {
+	      service.charPrimitive();
+	    } catch (DirectCallIOException e) {
+	      assertThat(e).hasMessage("Expected body of length 1 for Character conversion but was 0");
+	    }
+	
+	    server.enqueue(new MockResponse().setBody("bb"));
+	    try {
+	      service.charPrimitive();
+	    } catch (DirectCallIOException e) {
+	      assertThat(e).hasMessage("Expected body of length 1 for Character conversion but was 2");
+	    }
+	
+	    server.enqueue(new MockResponse().setBody("13.13"));
+	    double doubleResponse = service.doublePrimitive();
+	    assertThat(doubleResponse).isEqualTo(13.13);
+	
+	    server.enqueue(new MockResponse().setBody("13.13"));
+	    float floatResponse = service.floatPrimitive();
+	    assertThat(floatResponse).isEqualTo(13.13f);
+	
+	    server.enqueue(new MockResponse().setBody("13"));
+	    int integerResponse = service.integerPrimitive();
+	    assertThat(integerResponse).isEqualTo(13);
+	
+	    server.enqueue(new MockResponse().setBody("1347"));
+	    long longResponse = service.longPrimitive();
+	    assertThat(longResponse).isEqualTo(1347L);
+	
+	    server.enqueue(new MockResponse().setBody("134"));
+	    short shortResponse = service.shortPrimitive();
+	    assertThat(shortResponse).isEqualTo((short) 134);
+	  }
+
+interface Service {
     @GET("/") boolean booleanPrimitive();
     @GET("/") byte bytePrimitive();
     @GET("/") char charPrimitive();
@@ -65,66 +126,5 @@ public final class ScalarsConverterPrimitivesFactoryTest {
         }
       };
     }
-  }
-
-  @Rule public final MockWebServer server = new MockWebServer();
-
-  private Service service;
-
-  @Before public void setUp() {
-    Retrofit retrofit = new Retrofit.Builder()
-        .baseUrl(server.url("/"))
-        .addConverterFactory(ScalarsConverterFactory.create())
-        .addCallAdapterFactory(new DirectCallAdapterFactory())
-        .build();
-    service = retrofit.create(Service.class);
-  }
-
-  @Test public void supportedResponseTypes() throws IOException, InterruptedException {
-    server.enqueue(new MockResponse().setBody("true"));
-    boolean booleanResponse = service.booleanPrimitive();
-    assertThat(booleanResponse).isTrue();
-
-    server.enqueue(new MockResponse().setBody("5"));
-    byte byteResponse = service.bytePrimitive();
-    assertThat(byteResponse).isEqualTo((byte) 5);
-
-    server.enqueue(new MockResponse().setBody("b"));
-    char characterResponse = service.charPrimitive();
-    assertThat(characterResponse).isEqualTo('b');
-
-    server.enqueue(new MockResponse().setBody(""));
-    try {
-      service.charPrimitive();
-    } catch (DirectCallIOException e) {
-      assertThat(e).hasMessage("Expected body of length 1 for Character conversion but was 0");
-    }
-
-    server.enqueue(new MockResponse().setBody("bb"));
-    try {
-      service.charPrimitive();
-    } catch (DirectCallIOException e) {
-      assertThat(e).hasMessage("Expected body of length 1 for Character conversion but was 2");
-    }
-
-    server.enqueue(new MockResponse().setBody("13.13"));
-    double doubleResponse = service.doublePrimitive();
-    assertThat(doubleResponse).isEqualTo(13.13);
-
-    server.enqueue(new MockResponse().setBody("13.13"));
-    float floatResponse = service.floatPrimitive();
-    assertThat(floatResponse).isEqualTo(13.13f);
-
-    server.enqueue(new MockResponse().setBody("13"));
-    int integerResponse = service.integerPrimitive();
-    assertThat(integerResponse).isEqualTo(13);
-
-    server.enqueue(new MockResponse().setBody("1347"));
-    long longResponse = service.longPrimitive();
-    assertThat(longResponse).isEqualTo(1347L);
-
-    server.enqueue(new MockResponse().setBody("134"));
-    short shortResponse = service.shortPrimitive();
-    assertThat(shortResponse).isEqualTo((short) 134);
   }
 }

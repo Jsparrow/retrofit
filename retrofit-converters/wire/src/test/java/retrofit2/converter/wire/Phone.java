@@ -48,8 +48,12 @@ public final class Phone extends Message<Phone, Phone.Builder> {
 
   @Override
   public boolean equals(Object other) {
-    if (other == this) return true;
-    if (!(other instanceof Phone)) return false;
+    if (other == this) {
+		return true;
+	}
+    if (!(other instanceof Phone)) {
+		return false;
+	}
     Phone o = (Phone) other;
     return Internal.equals(unknownFields(), o.unknownFields())
         && Internal.equals(number, o.number);
@@ -69,7 +73,9 @@ public final class Phone extends Message<Phone, Phone.Builder> {
   @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();
-    if (number != null) builder.append(", number=").append(number);
+    if (number != null) {
+		builder.append(", number=").append(number);
+	}
     return builder.replace(0, 2, "Phone{").append('}').toString();
   }
 
@@ -103,7 +109,9 @@ public final class Phone extends Message<Phone, Phone.Builder> {
 
     @Override
     public void encode(ProtoWriter writer, Phone value) throws IOException {
-      if (value.number != null) ProtoAdapter.STRING.encodeWithTag(writer, 1, value.number);
+      if (value.number != null) {
+		ProtoAdapter.STRING.encodeWithTag(writer, 1, value.number);
+	}
       writer.writeBytes(value.unknownFields());
     }
 

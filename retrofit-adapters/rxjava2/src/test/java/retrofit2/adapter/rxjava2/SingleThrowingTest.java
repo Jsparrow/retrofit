@@ -40,16 +40,9 @@ public final class SingleThrowingTest {
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final TestRule resetRule = new RxJavaPluginsResetRule();
   @Rule public final RecordingSingleObserver.Rule subscriberRule = new RecordingSingleObserver.Rule();
+private Service service;
 
-  interface Service {
-    @GET("/") Single<String> body();
-    @GET("/") Single<Response<String>> response();
-    @GET("/") Single<Result<String>> result();
-  }
-
-  private Service service;
-
-  @Before public void setUp() {
+@Before public void setUp() {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new StringConverterFactory())
@@ -58,7 +51,7 @@ public final class SingleThrowingTest {
     service = retrofit.create(Service.class);
   }
 
-  @Test public void bodyThrowingInOnSuccessDeliveredToPlugin() {
+@Test public void bodyThrowingInOnSuccessDeliveredToPlugin() {
     server.enqueue(new MockResponse());
 
     final AtomicReference<Throwable> throwableRef = new AtomicReference<>();
@@ -79,7 +72,7 @@ public final class SingleThrowingTest {
     assertThat(throwableRef.get()).isSameAs(e);
   }
 
-  @Test public void bodyThrowingInOnErrorDeliveredToPlugin() {
+@Test public void bodyThrowingInOnErrorDeliveredToPlugin() {
     server.enqueue(new MockResponse().setResponseCode(404));
 
     final AtomicReference<Throwable> throwableRef = new AtomicReference<>();
@@ -106,7 +99,7 @@ public final class SingleThrowingTest {
     assertThat(composite.getExceptions()).containsExactly(errorRef.get(), e);
   }
 
-  @Test public void responseThrowingInOnSuccessDeliveredToPlugin() {
+@Test public void responseThrowingInOnSuccessDeliveredToPlugin() {
     server.enqueue(new MockResponse());
 
     final AtomicReference<Throwable> throwableRef = new AtomicReference<>();
@@ -127,7 +120,7 @@ public final class SingleThrowingTest {
     assertThat(throwableRef.get()).isSameAs(e);
   }
 
-  @Test public void responseThrowingInOnErrorDeliveredToPlugin() {
+@Test public void responseThrowingInOnErrorDeliveredToPlugin() {
     server.enqueue(new MockResponse().setSocketPolicy(DISCONNECT_AFTER_REQUEST));
 
     final AtomicReference<Throwable> throwableRef = new AtomicReference<>();
@@ -154,7 +147,7 @@ public final class SingleThrowingTest {
     assertThat(composite.getExceptions()).containsExactly(errorRef.get(), e);
   }
 
-  @Test public void resultThrowingInOnSuccessDeliveredToPlugin() {
+@Test public void resultThrowingInOnSuccessDeliveredToPlugin() {
     server.enqueue(new MockResponse());
 
     final AtomicReference<Throwable> throwableRef = new AtomicReference<>();
@@ -175,7 +168,7 @@ public final class SingleThrowingTest {
     assertThat(throwableRef.get()).isSameAs(e);
   }
 
-  @Ignore("Single's contract is onNext|onError so we have no way of triggering this case")
+@Ignore("Single's contract is onNext|onError so we have no way of triggering this case")
   @Test public void resultThrowingInOnErrorDeliveredToPlugin() {
     server.enqueue(new MockResponse());
 
@@ -205,7 +198,13 @@ public final class SingleThrowingTest {
     assertThat(composite.getExceptions()).containsExactly(first, second);
   }
 
-  private static abstract class ForwardingObserver<T> implements SingleObserver<T> {
+  interface Service {
+    @GET("/") Single<String> body();
+    @GET("/") Single<Response<String>> response();
+    @GET("/") Single<Result<String>> result();
+  }
+
+  private abstract static class ForwardingObserver<T> implements SingleObserver<T> {
     private final SingleObserver<T> delegate;
 
     ForwardingObserver(SingleObserver<T> delegate) {

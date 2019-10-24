@@ -29,14 +29,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 public final class Java8DefaultMethodsTest {
   @Rule public final MockWebServer server = new MockWebServer();
 
-  interface Example {
-    @GET("/") Call<String> user(@Query("name") String name);
-
-    default Call<String> user() {
-      return user("hey");
-    }
-  }
-
   @Test public void test() throws IOException {
     server.enqueue(new MockResponse().setBody("Hi"));
     server.enqueue(new MockResponse().setBody("Hi"));
@@ -51,5 +43,13 @@ public final class Java8DefaultMethodsTest {
     assertThat(response.body()).isEqualTo("Hi");
     Response<String> response2 = example.user("Hi").execute();
     assertThat(response2.body()).isEqualTo("Hi");
+  }
+
+interface Example {
+    @GET("/") Call<String> user(@Query("name") String name);
+
+    default Call<String> user() {
+      return user("hey");
+    }
   }
 }

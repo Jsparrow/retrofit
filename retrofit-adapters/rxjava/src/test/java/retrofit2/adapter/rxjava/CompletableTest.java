@@ -32,14 +32,9 @@ public final class CompletableTest {
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final TestRule pluginsReset = new RxJavaPluginsResetRule();
   @Rule public final RecordingSubscriber.Rule subscriberRule = new RecordingSubscriber.Rule();
+private Service service;
 
-  interface Service {
-    @GET("/") Completable completable();
-  }
-
-  private Service service;
-
-  @Before public void setUp() {
+@Before public void setUp() {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
@@ -47,7 +42,7 @@ public final class CompletableTest {
     service = retrofit.create(Service.class);
   }
 
-  @Test public void completableSuccess200() {
+@Test public void completableSuccess200() {
     server.enqueue(new MockResponse().setBody("Hi"));
 
     RecordingSubscriber<Void> subscriber = subscriberRule.create();
@@ -55,7 +50,7 @@ public final class CompletableTest {
     subscriber.assertCompleted();
   }
 
-  @Test public void completableSuccess404() {
+@Test public void completableSuccess404() {
     server.enqueue(new MockResponse().setResponseCode(404));
 
     RecordingSubscriber<Void> subscriber = subscriberRule.create();
@@ -64,7 +59,7 @@ public final class CompletableTest {
     subscriber.assertError(HttpException.class, "HTTP 404 Client Error");
   }
 
-  @Test public void completableFailure() {
+@Test public void completableFailure() {
     server.enqueue(new MockResponse().setSocketPolicy(DISCONNECT_AFTER_REQUEST));
 
     RecordingSubscriber<Void> subscriber = subscriberRule.create();
@@ -72,7 +67,7 @@ public final class CompletableTest {
     subscriber.assertError(IOException.class);
   }
 
-  @Test public void subscribeTwice() {
+@Test public void subscribeTwice() {
     server.enqueue(new MockResponse().setBody("Hi"));
     server.enqueue(new MockResponse().setBody("Hey"));
 
@@ -85,5 +80,9 @@ public final class CompletableTest {
     RecordingSubscriber<String> subscriber2 = subscriberRule.create();
     observable.subscribe(subscriber2);
     subscriber2.assertCompleted();
+  }
+
+  interface Service {
+    @GET("/") Completable completable();
   }
 }

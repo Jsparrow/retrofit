@@ -34,16 +34,9 @@ public final class SingleTest {
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final TestRule pluginsReset = new RxJavaPluginsResetRule();
   @Rule public final RecordingSubscriber.Rule subscriberRule = new RecordingSubscriber.Rule();
+private Service service;
 
-  interface Service {
-    @GET("/") Single<String> body();
-    @GET("/") Single<Response<String>> response();
-    @GET("/") Single<Result<String>> result();
-  }
-
-  private Service service;
-
-  @Before public void setUp() {
+@Before public void setUp() {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new StringConverterFactory())
@@ -52,7 +45,7 @@ public final class SingleTest {
     service = retrofit.create(Service.class);
   }
 
-  @Test public void bodySuccess200() {
+@Test public void bodySuccess200() {
     server.enqueue(new MockResponse().setBody("Hi"));
 
     RecordingSubscriber<String> subscriber = subscriberRule.create();
@@ -60,7 +53,7 @@ public final class SingleTest {
     subscriber.assertValue("Hi").assertCompleted();
   }
 
-  @Test public void bodySuccess404() {
+@Test public void bodySuccess404() {
     server.enqueue(new MockResponse().setResponseCode(404));
 
     RecordingSubscriber<String> subscriber = subscriberRule.create();
@@ -69,7 +62,7 @@ public final class SingleTest {
     subscriber.assertError(HttpException.class, "HTTP 404 Client Error");
   }
 
-  @Test public void bodyFailure() {
+@Test public void bodyFailure() {
     server.enqueue(new MockResponse().setSocketPolicy(DISCONNECT_AFTER_REQUEST));
 
     RecordingSubscriber<String> subscriber = subscriberRule.create();
@@ -77,7 +70,7 @@ public final class SingleTest {
     subscriber.assertError(IOException.class);
   }
 
-  @Test public void bodyThrowingInOnNextDeliveredToError() {
+@Test public void bodyThrowingInOnNextDeliveredToError() {
     server.enqueue(new MockResponse().setBody("Hi"));
 
     RecordingSubscriber<String> subscriber = subscriberRule.create();
@@ -91,7 +84,7 @@ public final class SingleTest {
     subscriber.assertError(e);
   }
 
-  @Test public void responseSuccess200() {
+@Test public void responseSuccess200() {
     server.enqueue(new MockResponse().setBody("Hi"));
 
     RecordingSubscriber<Response<String>> subscriber = subscriberRule.create();
@@ -100,7 +93,7 @@ public final class SingleTest {
     subscriber.assertCompleted();
   }
 
-  @Test public void responseSuccess404() throws IOException {
+@Test public void responseSuccess404() throws IOException {
     server.enqueue(new MockResponse().setResponseCode(404));
 
     RecordingSubscriber<Response<String>> subscriber = subscriberRule.create();
@@ -109,7 +102,7 @@ public final class SingleTest {
     subscriber.assertCompleted();
   }
 
-  @Test public void responseFailure() {
+@Test public void responseFailure() {
     server.enqueue(new MockResponse().setSocketPolicy(DISCONNECT_AFTER_REQUEST));
 
     RecordingSubscriber<Response<String>> subscriber = subscriberRule.create();
@@ -117,7 +110,7 @@ public final class SingleTest {
     subscriber.assertError(IOException.class);
   }
 
-  @Test public void responseThrowingInOnNextDeliveredToError() {
+@Test public void responseThrowingInOnNextDeliveredToError() {
     server.enqueue(new MockResponse().setBody("Hi"));
 
     RecordingSubscriber<Response<String>> subscriber = subscriberRule.create();
@@ -131,7 +124,7 @@ public final class SingleTest {
     subscriber.assertError(e);
   }
 
-  @Test public void resultSuccess200() {
+@Test public void resultSuccess200() {
     server.enqueue(new MockResponse().setBody("Hi"));
 
     RecordingSubscriber<Result<String>> subscriber = subscriberRule.create();
@@ -140,7 +133,7 @@ public final class SingleTest {
     subscriber.assertCompleted();
   }
 
-  @Test public void resultSuccess404() throws IOException {
+@Test public void resultSuccess404() throws IOException {
     server.enqueue(new MockResponse().setResponseCode(404));
 
     RecordingSubscriber<Result<String>> subscriber = subscriberRule.create();
@@ -149,7 +142,7 @@ public final class SingleTest {
     subscriber.assertCompleted();
   }
 
-  @Test public void resultFailure() {
+@Test public void resultFailure() {
     server.enqueue(new MockResponse().setSocketPolicy(DISCONNECT_AFTER_REQUEST));
 
     RecordingSubscriber<Result<String>> subscriber = subscriberRule.create();
@@ -158,7 +151,7 @@ public final class SingleTest {
     subscriber.assertCompleted();
   }
 
-  @Test public void resultThrowingInOnNextDeliveredToError() {
+@Test public void resultThrowingInOnNextDeliveredToError() {
     server.enqueue(new MockResponse().setBody("Hi"));
 
     RecordingSubscriber<Result<String>> subscriber = subscriberRule.create();
@@ -172,7 +165,7 @@ public final class SingleTest {
     subscriber.assertError(e);
   }
 
-  @Test public void subscribeTwice() {
+@Test public void subscribeTwice() {
     server.enqueue(new MockResponse().setBody("Hi"));
     server.enqueue(new MockResponse().setBody("Hey"));
 
@@ -185,5 +178,11 @@ public final class SingleTest {
     RecordingSubscriber<String> subscriber2 = subscriberRule.create();
     observable.subscribe(subscriber2);
     subscriber2.assertValue("Hey").assertCompleted();
+  }
+
+  interface Service {
+    @GET("/") Single<String> body();
+    @GET("/") Single<Response<String>> response();
+    @GET("/") Single<Result<String>> result();
   }
 }

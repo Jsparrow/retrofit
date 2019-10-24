@@ -36,15 +36,9 @@ import static org.junit.Assert.fail;
 
 public final class FutureTest {
   @Rule public final MockWebServer server = new MockWebServer();
+private Service service;
 
-  interface Service {
-    @GET("/") Future<String> body();
-    @GET("/") Future<Response<String>> response();
-  }
-
-  private Service service;
-
-  @Before public void setUp() {
+@Before public void setUp() {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new StringConverterFactory())
@@ -53,7 +47,7 @@ public final class FutureTest {
     service = retrofit.create(Service.class);
   }
 
-  @Test public void bodySuccess200() throws Exception {
+@Test public void bodySuccess200() throws Exception {
     server.enqueue(new MockResponse().setBody("Hi"));
 
     Future<String> future = service.body();
@@ -61,7 +55,7 @@ public final class FutureTest {
     assertThat(result).isEqualTo("Hi");
   }
 
-  @Test public void bodySuccess404() {
+@Test public void bodySuccess404() {
     server.enqueue(new MockResponse().setResponseCode(404));
 
     Future<String> future = service.body();
@@ -76,7 +70,7 @@ public final class FutureTest {
     }
   }
 
-  @Test public void bodyFailure() {
+@Test public void bodyFailure() {
     server.enqueue(new MockResponse().setSocketPolicy(DISCONNECT_AFTER_REQUEST));
 
     Future<String> future = service.body();
@@ -88,7 +82,7 @@ public final class FutureTest {
     }
   }
 
-  @Test public void responseSuccess200() throws Exception {
+@Test public void responseSuccess200() throws Exception {
     server.enqueue(new MockResponse().setBody("Hi"));
 
     Future<Response<String>> future = service.response();
@@ -97,7 +91,7 @@ public final class FutureTest {
     assertThat(response.body()).isEqualTo("Hi");
   }
 
-  @Test public void responseSuccess404() throws Exception {
+@Test public void responseSuccess404() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(404).setBody("Hi"));
 
     Future<Response<String>> future = service.response();
@@ -106,7 +100,7 @@ public final class FutureTest {
     assertThat(response.errorBody().string()).isEqualTo("Hi");
   }
 
-  @Test public void responseFailure() {
+@Test public void responseFailure() {
     server.enqueue(new MockResponse().setSocketPolicy(DISCONNECT_AFTER_REQUEST));
 
     Future<Response<String>> future = service.response();
@@ -116,5 +110,10 @@ public final class FutureTest {
     } catch (Exception e) {
       assertThat(e).isInstanceOf(IOException.class);
     }
+  }
+
+  interface Service {
+    @GET("/") Future<String> body();
+    @GET("/") Future<Response<String>> response();
   }
 }

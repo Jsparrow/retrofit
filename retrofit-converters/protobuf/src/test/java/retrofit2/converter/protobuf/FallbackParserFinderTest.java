@@ -36,7 +36,7 @@ public final class FallbackParserFinderTest {
   }
 
   @SuppressWarnings("unused") // Used reflectively.
-  public static abstract class FakePhone implements MessageLite {
+  public abstract static class FakePhone implements MessageLite {
     public static final Parser<Phone> PARSER = Phone.parser();
   }
 }

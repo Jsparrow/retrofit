@@ -37,11 +37,33 @@ import retrofit2.http.Query;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 public final class JsonQueryParameters {
-  @Retention(RUNTIME)
-  @interface Json {
-  }
+  public static void main(String... args) throws IOException, InterruptedException {
+	    MockWebServer server = new MockWebServer();
+	    server.start();
+	    server.enqueue(new MockResponse());
+	
+	    Retrofit retrofit = new Retrofit.Builder()
+	        .baseUrl(server.url("/"))
+	        .addConverterFactory(new JsonStringConverterFactory(GsonConverterFactory.create()))
+	        .build();
+	    Service service = retrofit.create(Service.class);
+	
+	    Call<ResponseBody> call = service.example(new Filter("123"));
+	    Response<ResponseBody> response = call.execute();
+	    // TODO handle user response...
+	
+	    // Print the request path that the server saw to show the JSON query param:
+	    RecordedRequest recordedRequest = server.takeRequest();
+	    System.out.println(recordedRequest.getPath());
+	
+	    server.shutdown();
+	  }
 
-  static class JsonStringConverterFactory extends Converter.Factory {
+	@Retention(RUNTIME)
+	  @interface Json {
+	  }
+
+static class JsonStringConverterFactory extends Converter.Factory {
     private final Converter.Factory delegateFactory;
 
     JsonStringConverterFactory(Converter.Factory delegateFactory) {
@@ -89,27 +111,5 @@ public final class JsonQueryParameters {
   interface Service {
     @GET("/filter")
     Call<ResponseBody> example(@Json @Query("value") Filter value);
-  }
-
-  public static void main(String... args) throws IOException, InterruptedException {
-    MockWebServer server = new MockWebServer();
-    server.start();
-    server.enqueue(new MockResponse());
-
-    Retrofit retrofit = new Retrofit.Builder()
-        .baseUrl(server.url("/"))
-        .addConverterFactory(new JsonStringConverterFactory(GsonConverterFactory.create()))
-        .build();
-    Service service = retrofit.create(Service.class);
-
-    Call<ResponseBody> call = service.example(new Filter("123"));
-    Response<ResponseBody> response = call.execute();
-    // TODO handle user response...
-
-    // Print the request path that the server saw to show the JSON query param:
-    RecordedRequest recordedRequest = server.takeRequest();
-    System.out.println(recordedRequest.getPath());
-
-    server.shutdown();
   }
 }

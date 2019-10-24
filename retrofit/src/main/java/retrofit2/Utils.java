@@ -46,20 +46,16 @@ final class Utils {
   static RuntimeException methodError(Method method, @Nullable Throwable cause, String message,
       Object... args) {
     message = String.format(message, args);
-    return new IllegalArgumentException(message
-        + "\n    for method "
-        + method.getDeclaringClass().getSimpleName()
-        + "."
-        + method.getName(), cause);
+    return new IllegalArgumentException(new StringBuilder().append(message).append("\n    for method ").append(method.getDeclaringClass().getSimpleName()).append(".").append(method.getName()).toString(), cause);
   }
 
   static RuntimeException parameterError(Method method,
       Throwable cause, int p, String message, Object... args) {
-    return methodError(method, cause, message + " (parameter #" + (p + 1) + ")", args);
+    return methodError(method, cause, new StringBuilder().append(message).append(" (parameter #").append(p + 1).append(")").toString(), args);
   }
 
   static RuntimeException parameterError(Method method, int p, String message, Object... args) {
-    return methodError(method, message + " (parameter #" + (p + 1) + ")", args);
+    return methodError(method, new StringBuilder().append(message).append(" (parameter #").append(p + 1).append(")").toString(), args);
   }
 
   static Class<?> getRawType(Type type) {
@@ -75,7 +71,9 @@ final class Utils {
       // I'm not exactly sure why getRawType() returns Type instead of Class. Neal isn't either but
       // suspects some pathological case related to nested classes exists.
       Type rawType = parameterizedType.getRawType();
-      if (!(rawType instanceof Class)) throw new IllegalArgumentException();
+      if (!(rawType instanceof Class)) {
+		throw new IllegalArgumentException();
+	}
       return (Class<?>) rawType;
     }
     if (type instanceof GenericArrayType) {
@@ -91,8 +89,7 @@ final class Utils {
       return getRawType(((WildcardType) type).getUpperBounds()[0]);
     }
 
-    throw new IllegalArgumentException("Expected a Class, ParameterizedType, or "
-          + "GenericArrayType, but <" + type + "> is of type " + type.getClass().getName());
+    throw new IllegalArgumentException(new StringBuilder().append("Expected a Class, ParameterizedType, or ").append("GenericArrayType, but <").append(type).append("> is of type ").append(type.getClass().getName()).toString());
   }
 
   /** Returns true if {@code a} and {@code b} are equal. */
@@ -104,7 +101,9 @@ final class Utils {
       return a.equals(b); // Class already specifies equals().
 
     } else if (a instanceof ParameterizedType) {
-      if (!(b instanceof ParameterizedType)) return false;
+      if (!(b instanceof ParameterizedType)) {
+		return false;
+	}
       ParameterizedType pa = (ParameterizedType) a;
       ParameterizedType pb = (ParameterizedType) b;
       Object ownerA = pa.getOwnerType();
@@ -114,20 +113,26 @@ final class Utils {
           && Arrays.equals(pa.getActualTypeArguments(), pb.getActualTypeArguments());
 
     } else if (a instanceof GenericArrayType) {
-      if (!(b instanceof GenericArrayType)) return false;
+      if (!(b instanceof GenericArrayType)) {
+		return false;
+	}
       GenericArrayType ga = (GenericArrayType) a;
       GenericArrayType gb = (GenericArrayType) b;
       return equals(ga.getGenericComponentType(), gb.getGenericComponentType());
 
     } else if (a instanceof WildcardType) {
-      if (!(b instanceof WildcardType)) return false;
+      if (!(b instanceof WildcardType)) {
+		return false;
+	}
       WildcardType wa = (WildcardType) a;
       WildcardType wb = (WildcardType) b;
       return Arrays.equals(wa.getUpperBounds(), wb.getUpperBounds())
           && Arrays.equals(wa.getLowerBounds(), wb.getLowerBounds());
 
     } else if (a instanceof TypeVariable) {
-      if (!(b instanceof TypeVariable)) return false;
+      if (!(b instanceof TypeVariable)) {
+		return false;
+	}
       TypeVariable<?> va = (TypeVariable<?>) a;
       TypeVariable<?> vb = (TypeVariable<?>) b;
       return va.getGenericDeclaration() == vb.getGenericDeclaration()
@@ -144,7 +149,9 @@ final class Utils {
    * result when the supertype is {@code Collection.class} is {@code Collection<Integer>}.
    */
   static Type getGenericSupertype(Type context, Class<?> rawType, Class<?> toResolve) {
-    if (toResolve == rawType) return context;
+    if (toResolve == rawType) {
+		return context;
+	}
 
     // We skip searching through interfaces if unknown is an interface.
     if (toResolve.isInterface()) {
@@ -177,7 +184,9 @@ final class Utils {
 
   private static int indexOf(Object[] array, Object toFind) {
     for (int i = 0; i < array.length; i++) {
-      if (toFind.equals(array[i])) return i;
+      if (toFind.equals(array[i])) {
+		return i;
+	}
     }
     throw new NoSuchElementException();
   }
@@ -194,7 +203,9 @@ final class Utils {
    * @param supertype a superclass of, or interface implemented by, this.
    */
   static Type getSupertype(Type context, Class<?> contextRawType, Class<?> supertype) {
-    if (!supertype.isAssignableFrom(contextRawType)) throw new IllegalArgumentException();
+    if (!supertype.isAssignableFrom(contextRawType)) {
+		throw new IllegalArgumentException();
+	}
     return resolve(context, contextRawType,
         getGenericSupertype(context, contextRawType, supertype));
   }
@@ -274,15 +285,16 @@ final class Utils {
     Class<?> declaredByRaw = declaringClassOf(unknown);
 
     // We can't reduce this further.
-    if (declaredByRaw == null) return unknown;
+    if (declaredByRaw == null) {
+		return unknown;
+	}
 
     Type declaredBy = getGenericSupertype(context, contextRawType, declaredByRaw);
-    if (declaredBy instanceof ParameterizedType) {
-      int index = indexOf(declaredByRaw.getTypeParameters(), unknown);
-      return ((ParameterizedType) declaredBy).getActualTypeArguments()[index];
-    }
-
-    return unknown;
+    if (!(declaredBy instanceof ParameterizedType)) {
+		return unknown;
+	}
+	int index = indexOf(declaredByRaw.getTypeParameters(), unknown);
+	return ((ParameterizedType) declaredBy).getActualTypeArguments()[index];
   }
 
   /**
@@ -321,7 +333,8 @@ final class Utils {
     Type[] types = type.getActualTypeArguments();
     if (index < 0 || index >= types.length) {
       throw new IllegalArgumentException(
-          "Index " + index + " not in range [0," + types.length + ") for " + type);
+          new StringBuilder().append("Index ").append(index).append(" not in range [0,").append(types.length).append(") for ").append(type)
+				.toString());
     }
     Type paramType = types[index];
     if (paramType instanceof WildcardType) {
@@ -361,11 +374,22 @@ final class Utils {
       return true;
     }
     String className = type == null ? "null" : type.getClass().getName();
-    throw new IllegalArgumentException("Expected a Class, ParameterizedType, or "
-        + "GenericArrayType, but <" + type + "> is of type " + className);
+    throw new IllegalArgumentException(new StringBuilder().append("Expected a Class, ParameterizedType, or ").append("GenericArrayType, but <").append(type).append("> is of type ").append(className).toString());
   }
 
-  static final class ParameterizedTypeImpl implements ParameterizedType {
+  // https://github.com/ReactiveX/RxJava/blob/6a44e5d0543a48f1c378dc833a155f3f71333bc2/
+  // src/main/java/io/reactivex/exceptions/Exceptions.java#L66
+  static void throwIfFatal(Throwable t) {
+    if (t instanceof VirtualMachineError) {
+      throw (VirtualMachineError) t;
+    } else if (t instanceof ThreadDeath) {
+      throw (ThreadDeath) t;
+    } else if (t instanceof LinkageError) {
+      throw (LinkageError) t;
+    }
+  }
+
+static final class ParameterizedTypeImpl implements ParameterizedType {
     private final @Nullable Type ownerType;
     private final Type rawType;
     private final Type[] typeArguments;
@@ -410,7 +434,9 @@ final class Utils {
     }
 
     @Override public String toString() {
-      if (typeArguments.length == 0) return typeToString(rawType);
+      if (typeArguments.length == 0) {
+		return typeToString(rawType);
+	}
       StringBuilder result = new StringBuilder(30 * (typeArguments.length + 1));
       result.append(typeToString(rawType));
       result.append("<").append(typeToString(typeArguments[0]));
@@ -456,17 +482,27 @@ final class Utils {
     private final @Nullable Type lowerBound;
 
     WildcardTypeImpl(Type[] upperBounds, Type[] lowerBounds) {
-      if (lowerBounds.length > 1) throw new IllegalArgumentException();
-      if (upperBounds.length != 1) throw new IllegalArgumentException();
+      if (lowerBounds.length > 1) {
+		throw new IllegalArgumentException();
+	}
+      if (upperBounds.length != 1) {
+		throw new IllegalArgumentException();
+	}
 
       if (lowerBounds.length == 1) {
-        if (lowerBounds[0] == null) throw new NullPointerException();
+        if (lowerBounds[0] == null) {
+			throw new NullPointerException();
+		}
         checkNotPrimitive(lowerBounds[0]);
-        if (upperBounds[0] != Object.class) throw new IllegalArgumentException();
+        if (upperBounds[0] != Object.class) {
+			throw new IllegalArgumentException();
+		}
         this.lowerBound = lowerBounds[0];
         this.upperBound = Object.class;
       } else {
-        if (upperBounds[0] == null) throw new NullPointerException();
+        if (upperBounds[0] == null) {
+			throw new NullPointerException();
+		}
         checkNotPrimitive(upperBounds[0]);
         this.lowerBound = null;
         this.upperBound = upperBounds[0];
@@ -491,21 +527,13 @@ final class Utils {
     }
 
     @Override public String toString() {
-      if (lowerBound != null) return "? super " + typeToString(lowerBound);
-      if (upperBound == Object.class) return "?";
+      if (lowerBound != null) {
+		return "? super " + typeToString(lowerBound);
+	}
+      if (upperBound == Object.class) {
+		return "?";
+	}
       return "? extends " + typeToString(upperBound);
-    }
-  }
-
-  // https://github.com/ReactiveX/RxJava/blob/6a44e5d0543a48f1c378dc833a155f3f71333bc2/
-  // src/main/java/io/reactivex/exceptions/Exceptions.java#L66
-  static void throwIfFatal(Throwable t) {
-    if (t instanceof VirtualMachineError) {
-      throw (VirtualMachineError) t;
-    } else if (t instanceof ThreadDeath) {
-      throw (ThreadDeath) t;
-    } else if (t instanceof LinkageError) {
-      throw (LinkageError) t;
     }
   }
 }

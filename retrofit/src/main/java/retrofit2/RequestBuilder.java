@@ -115,7 +115,7 @@ final class RequestBuilder {
       throw new AssertionError();
     }
     String replacement = canonicalizeForPath(value, encoded);
-    String newRelativeUrl = relativeUrl.replace("{" + name + "}", replacement);
+    String newRelativeUrl = relativeUrl.replace(new StringBuilder().append("{").append(name).append("}").toString(), replacement);
     if (PATH_TRAVERSAL.matcher(newRelativeUrl).matches()) {
       throw new IllegalArgumentException(
           "@Path parameters shouldn't perform path traversal ('.' or '..'): " + value);
@@ -178,7 +178,7 @@ final class RequestBuilder {
       urlBuilder = baseUrl.newBuilder(relativeUrl);
       if (urlBuilder == null) {
         throw new IllegalArgumentException(
-            "Malformed URL. Base: " + baseUrl + ", Relative: " + relativeUrl);
+            new StringBuilder().append("Malformed URL. Base: ").append(baseUrl).append(", Relative: ").append(relativeUrl).toString());
       }
       relativeUrl = null;
     }
@@ -230,7 +230,7 @@ final class RequestBuilder {
       url = baseUrl.resolve(relativeUrl);
       if (url == null) {
         throw new IllegalArgumentException(
-            "Malformed URL. Base: " + baseUrl + ", Relative: " + relativeUrl);
+            new StringBuilder().append("Malformed URL. Base: ").append(baseUrl).append(", Relative: ").append(relativeUrl).toString());
       }
     }
 

@@ -40,16 +40,9 @@ public final class MaybeThrowingTest {
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final TestRule resetRule = new RxJavaPluginsResetRule();
   @Rule public final RecordingMaybeObserver.Rule subscriberRule = new RecordingMaybeObserver.Rule();
+private Service service;
 
-  interface Service {
-    @GET("/") Maybe<String> body();
-    @GET("/") Maybe<Response<String>> response();
-    @GET("/") Maybe<Result<String>> result();
-  }
-
-  private Service service;
-
-  @Before public void setUp() {
+@Before public void setUp() {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new StringConverterFactory())
@@ -58,7 +51,7 @@ public final class MaybeThrowingTest {
     service = retrofit.create(Service.class);
   }
 
-  @Test public void bodyThrowingInOnSuccessDeliveredToPlugin() {
+@Test public void bodyThrowingInOnSuccessDeliveredToPlugin() {
     server.enqueue(new MockResponse());
 
     final AtomicReference<Throwable> throwableRef = new AtomicReference<>();
@@ -79,7 +72,7 @@ public final class MaybeThrowingTest {
     assertThat(throwableRef.get()).isSameAs(e);
   }
 
-  @Test public void bodyThrowingInOnErrorDeliveredToPlugin() {
+@Test public void bodyThrowingInOnErrorDeliveredToPlugin() {
     server.enqueue(new MockResponse().setResponseCode(404));
 
     final AtomicReference<Throwable> throwableRef = new AtomicReference<>();
@@ -106,7 +99,7 @@ public final class MaybeThrowingTest {
     assertThat(composite.getExceptions()).containsExactly(errorRef.get(), e);
   }
 
-  @Test public void responseThrowingInOnSuccessDeliveredToPlugin() {
+@Test public void responseThrowingInOnSuccessDeliveredToPlugin() {
     server.enqueue(new MockResponse());
 
     final AtomicReference<Throwable> throwableRef = new AtomicReference<>();
@@ -127,7 +120,7 @@ public final class MaybeThrowingTest {
     assertThat(throwableRef.get()).isSameAs(e);
   }
 
-  @Test public void responseThrowingInOnErrorDeliveredToPlugin() {
+@Test public void responseThrowingInOnErrorDeliveredToPlugin() {
     server.enqueue(new MockResponse().setSocketPolicy(DISCONNECT_AFTER_REQUEST));
 
     final AtomicReference<Throwable> throwableRef = new AtomicReference<>();
@@ -154,7 +147,7 @@ public final class MaybeThrowingTest {
     assertThat(composite.getExceptions()).containsExactly(errorRef.get(), e);
   }
 
-  @Test public void resultThrowingInOnSuccessDeliveredToPlugin() {
+@Test public void resultThrowingInOnSuccessDeliveredToPlugin() {
     server.enqueue(new MockResponse());
 
     final AtomicReference<Throwable> throwableRef = new AtomicReference<>();
@@ -175,7 +168,7 @@ public final class MaybeThrowingTest {
     assertThat(throwableRef.get()).isSameAs(e);
   }
 
-  @Ignore("Single's contract is onNext|onError so we have no way of triggering this case")
+@Ignore("Single's contract is onNext|onError so we have no way of triggering this case")
   @Test public void resultThrowingInOnErrorDeliveredToPlugin() {
     server.enqueue(new MockResponse());
 
@@ -205,7 +198,13 @@ public final class MaybeThrowingTest {
     assertThat(composite.getExceptions()).containsExactly(first, second);
   }
 
-  private static abstract class ForwardingObserver<T> implements MaybeObserver<T> {
+  interface Service {
+    @GET("/") Maybe<String> body();
+    @GET("/") Maybe<Response<String>> response();
+    @GET("/") Maybe<Result<String>> result();
+  }
+
+  private abstract static class ForwardingObserver<T> implements MaybeObserver<T> {
     private final MaybeObserver<T> delegate;
 
     ForwardingObserver(MaybeObserver<T> delegate) {

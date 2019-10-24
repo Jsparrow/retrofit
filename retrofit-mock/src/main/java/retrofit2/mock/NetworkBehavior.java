@@ -44,40 +44,40 @@ public final class NetworkBehavior {
   private static final int DEFAULT_VARIANCE_PERCENT = 40; // Network delay varies by ±40%.
   private static final int DEFAULT_FAILURE_PERCENT = 3; // 3% of network calls will fail.
   private static final int DEFAULT_ERROR_PERCENT = 0; // 0% of network calls will return errors.
-
-  /** Create an instance with default behavior. */
-  public static NetworkBehavior create() {
-    return new NetworkBehavior(new Random());
-  }
-
-  /**
-   * Create an instance with default behavior which uses {@code random} to control variance and
-   * failure calculation.
-   */
-  @SuppressWarnings("ConstantConditions") // Guarding public API nullability.
-  public static NetworkBehavior create(Random random) {
-    if (random == null) throw new NullPointerException("random == null");
-    return new NetworkBehavior(random);
-  }
-
-  private final Random random;
-
-  private volatile long delayMs = DEFAULT_DELAY_MS;
-  private volatile int variancePercent = DEFAULT_VARIANCE_PERCENT;
-  private volatile int failurePercent = DEFAULT_FAILURE_PERCENT;
-  private volatile Throwable failureException;
-  private volatile int errorPercent = DEFAULT_ERROR_PERCENT;
-  private volatile Callable<Response<?>> errorFactory =
+private final Random random;
+private volatile long delayMs = DEFAULT_DELAY_MS;
+private volatile int variancePercent = DEFAULT_VARIANCE_PERCENT;
+private volatile int failurePercent = DEFAULT_FAILURE_PERCENT;
+private volatile Throwable failureException;
+private volatile int errorPercent = DEFAULT_ERROR_PERCENT;
+private volatile Callable<Response<?>> errorFactory =
       () -> Response.error(500, ResponseBody.create(null, new byte[0]));
 
-  private NetworkBehavior(Random random) {
+private NetworkBehavior(Random random) {
     this.random = random;
 
     failureException = new MockRetrofitIOException();
     failureException.setStackTrace(new StackTraceElement[0]);
   }
 
-  /** Set the network round trip delay. */
+/** Create an instance with default behavior. */
+  public static NetworkBehavior create() {
+    return new NetworkBehavior(new Random());
+  }
+
+/**
+   * Create an instance with default behavior which uses {@code random} to control variance and
+   * failure calculation.
+   */
+  @SuppressWarnings("ConstantConditions") // Guarding public API nullability.
+  public static NetworkBehavior create(Random random) {
+    if (random == null) {
+		throw new NullPointerException("random == null");
+	}
+    return new NetworkBehavior(random);
+  }
+
+/** Set the network round trip delay. */
   public void setDelay(long amount, TimeUnit unit) {
     if (amount < 0) {
       throw new IllegalArgumentException("Amount must be positive value.");
@@ -85,34 +85,34 @@ public final class NetworkBehavior {
     this.delayMs = unit.toMillis(amount);
   }
 
-  /** The network round trip delay. */
+/** The network round trip delay. */
   public long delay(TimeUnit unit) {
     return MILLISECONDS.convert(delayMs, unit);
   }
 
-  /** Set the plus-or-minus variance percentage of the network round trip delay. */
+/** Set the plus-or-minus variance percentage of the network round trip delay. */
   public void setVariancePercent(int variancePercent) {
     checkPercentageValidity(variancePercent, "Variance percentage must be between 0 and 100.");
     this.variancePercent = variancePercent;
   }
 
-  /** The plus-or-minus variance percentage of the network round trip delay. */
+/** The plus-or-minus variance percentage of the network round trip delay. */
   public int variancePercent() {
     return variancePercent;
   }
 
-  /** Set the percentage of calls to {@link #calculateIsFailure()} that return {@code true}. */
+/** Set the percentage of calls to {@link #calculateIsFailure()} that return {@code true}. */
   public void setFailurePercent(int failurePercent) {
     checkPercentageValidity(failurePercent, "Failure percentage must be between 0 and 100.");
     this.failurePercent = failurePercent;
   }
 
-  /** The percentage of calls to {@link #calculateIsFailure()} that return {@code true}. */
+/** The percentage of calls to {@link #calculateIsFailure()} that return {@code true}. */
   public int failurePercent() {
     return failurePercent;
   }
 
-  /**
+/**
    * Set the exception to be used when a failure is triggered.
    * <p>
    * It is a best practice to remove the stack trace from {@code exception} since it can
@@ -126,23 +126,23 @@ public final class NetworkBehavior {
     this.failureException = exception;
   }
 
-  /** The exception to be used when a failure is triggered. */
+/** The exception to be used when a failure is triggered. */
   public Throwable failureException() {
     return failureException;
   }
 
-  /** The percentage of calls to {@link #calculateIsError()} that return {@code true}. */
+/** The percentage of calls to {@link #calculateIsError()} that return {@code true}. */
   public int errorPercent() {
     return errorPercent;
   }
 
-  /** Set the percentage of calls to {@link #calculateIsError()} that return {@code true}. */
+/** Set the percentage of calls to {@link #calculateIsError()} that return {@code true}. */
   public void setErrorPercent(int errorPercent) {
     checkPercentageValidity(errorPercent, "Error percentage must be between 0 and 100.");
     this.errorPercent = errorPercent;
   }
 
-  /**
+/**
    * Set the error response factory to be used when an error is triggered. This factory may only
    * return responses for which {@link Response#isSuccessful()} returns false.
    */
@@ -154,7 +154,7 @@ public final class NetworkBehavior {
     this.errorFactory = errorFactory;
   }
 
-  /** The HTTP error to be used when an error is triggered. */
+/** The HTTP error to be used when an error is triggered. */
   public Response<?> createErrorResponse() {
     Response<?> call;
     try {
@@ -171,7 +171,7 @@ public final class NetworkBehavior {
     return call;
   }
 
-  /**
+/**
    * Randomly determine whether this call should result in a network failure in accordance with
    * configured behavior. When true, {@link #failureException()} should be thrown.
    */
@@ -179,7 +179,7 @@ public final class NetworkBehavior {
     return random.nextInt(100) < failurePercent;
   }
 
-  /**
+/**
    * Randomly determine whether this call should result in an HTTP error in accordance with
    * configured behavior. When true, {@link #createErrorResponse()} should be returned.
    */
@@ -187,7 +187,7 @@ public final class NetworkBehavior {
     return random.nextInt(100) < errorPercent;
   }
 
-  /**
+/**
    * Get the delay that should be used for delaying a response in accordance with configured
    * behavior.
    */
@@ -201,7 +201,7 @@ public final class NetworkBehavior {
     return MILLISECONDS.convert(callDelayMs, unit);
   }
 
-  private static void checkPercentageValidity(int percentage, String message) {
+private static void checkPercentageValidity(int percentage, String message) {
     if (percentage < 0 || percentage > 100) {
       throw new IllegalArgumentException(message);
     }

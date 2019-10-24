@@ -39,12 +39,40 @@ import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 public final class ChunkingConverter {
-  @Target(PARAMETER)
-  @Retention(RUNTIME)
-  @interface Chunked {
-  }
+  public static void main(String... args) throws IOException, InterruptedException {
+	    MockWebServer server = new MockWebServer();
+	    server.enqueue(new MockResponse());
+	    server.enqueue(new MockResponse());
+	    server.start();
+	
+	    Retrofit retrofit = new Retrofit.Builder()
+	        .baseUrl(server.url("/"))
+	        .addConverterFactory(new ChunkingConverterFactory())
+	        .addConverterFactory(GsonConverterFactory.create())
+	        .build();
+	    Service service = retrofit.create(Service.class);
+	
+	    Repo retrofitRepo = new Repo("square", "retrofit");
+	
+	    service.sendNormal(retrofitRepo).execute();
+	    RecordedRequest normalRequest = server.takeRequest();
+	    System.out.println(
+	        "Normal @Body Transfer-Encoding: " + normalRequest.getHeader("Transfer-Encoding"));
+	
+	    service.sendChunked(retrofitRepo).execute();
+	    RecordedRequest chunkedRequest = server.takeRequest();
+	    System.out.println(
+	        "@Chunked @Body Transfer-Encoding: " + chunkedRequest.getHeader("Transfer-Encoding"));
+	
+	    server.shutdown();
+	  }
 
-  /**
+	@Target(PARAMETER)
+	  @Retention(RUNTIME)
+	  @interface Chunked {
+	  }
+
+/**
    * A converter which removes known content lengths to force chunking when {@code @Chunked} is
    * present on {@code @Body} params.
    */
@@ -95,33 +123,5 @@ public final class ChunkingConverter {
     Call<ResponseBody> sendNormal(@Body Repo repo);
     @POST("/")
     Call<ResponseBody> sendChunked(@Chunked @Body Repo repo);
-  }
-
-  public static void main(String... args) throws IOException, InterruptedException {
-    MockWebServer server = new MockWebServer();
-    server.enqueue(new MockResponse());
-    server.enqueue(new MockResponse());
-    server.start();
-
-    Retrofit retrofit = new Retrofit.Builder()
-        .baseUrl(server.url("/"))
-        .addConverterFactory(new ChunkingConverterFactory())
-        .addConverterFactory(GsonConverterFactory.create())
-        .build();
-    Service service = retrofit.create(Service.class);
-
-    Repo retrofitRepo = new Repo("square", "retrofit");
-
-    service.sendNormal(retrofitRepo).execute();
-    RecordedRequest normalRequest = server.takeRequest();
-    System.out.println(
-        "Normal @Body Transfer-Encoding: " + normalRequest.getHeader("Transfer-Encoding"));
-
-    service.sendChunked(retrofitRepo).execute();
-    RecordedRequest chunkedRequest = server.takeRequest();
-    System.out.println(
-        "@Chunked @Body Transfer-Encoding: " + chunkedRequest.getHeader("Transfer-Encoding"));
-
-    server.shutdown();
   }
 }

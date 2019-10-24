@@ -39,7 +39,103 @@ import static org.junit.Assert.fail;
 import static retrofit2.converter.protobuf.PhoneProtos.Phone;
 
 public final class ProtoConverterFactoryTest {
-  interface Service {
+  @Rule public final MockWebServer server = new MockWebServer();
+
+	private Service service;
+
+	private ServiceWithRegistry serviceWithRegistry;
+
+	@Before public void setUp() {
+	    Retrofit retrofit = new Retrofit.Builder()
+	        .baseUrl(server.url("/"))
+	        .addConverterFactory(ProtoConverterFactory.create())
+	        .build();
+	    service = retrofit.create(Service.class);
+	
+	    ExtensionRegistry registry = ExtensionRegistry.newInstance();
+	    PhoneProtos.registerAllExtensions(registry);
+	    Retrofit retrofitWithRegistry = new Retrofit.Builder()
+	        .baseUrl(server.url("/"))
+	        .addConverterFactory(ProtoConverterFactory.createWithRegistry(registry))
+	        .build();
+	    serviceWithRegistry = retrofitWithRegistry.create(ServiceWithRegistry.class);
+	  }
+
+	@Test public void serializeAndDeserialize() throws IOException, InterruptedException {
+	    ByteString encoded = ByteString.decodeBase64("Cg4oNTE5KSA4NjctNTMwOQ==");
+	    server.enqueue(new MockResponse().setBody(new Buffer().write(encoded)));
+	
+	    Call<Phone> call = service.post(Phone.newBuilder().setNumber("(519) 867-5309").build());
+	    Response<Phone> response = call.execute();
+	    Phone body = response.body();
+	    assertThat(body.getNumber()).isEqualTo("(519) 867-5309");
+	
+	    RecordedRequest request = server.takeRequest();
+	    assertThat(request.getBody().readByteString()).isEqualTo(encoded);
+	    assertThat(request.getHeader("Content-Type")).isEqualTo("application/x-protobuf");
+	  }
+
+	@Test public void deserializeEmpty() throws IOException {
+	    server.enqueue(new MockResponse());
+	
+	    Call<Phone> call = service.get();
+	    Response<Phone> response = call.execute();
+	    Phone body = response.body();
+	    assertThat(body.hasNumber()).isFalse();
+	  }
+
+	@Test public void deserializeUsesRegistry() throws IOException {
+	    ByteString encoded = ByteString.decodeBase64("Cg4oNTE5KSA4NjctNTMwORAB");
+	    server.enqueue(new MockResponse().setBody(new Buffer().write(encoded)));
+	
+	    Call<Phone> call = serviceWithRegistry.get();
+	    Response<Phone> response = call.execute();
+	    Phone body = response.body();
+	    assertThat(body.getNumber()).isEqualTo("(519) 867-5309");
+	    assertThat(body.getExtension(PhoneProtos.voicemail)).isEqualTo(true);
+	  }
+
+	@Test public void deserializeWrongClass() throws IOException {
+	    ByteString encoded = ByteString.decodeBase64("Cg4oNTE5KSA4NjctNTMwOQ==");
+	    server.enqueue(new MockResponse().setBody(new Buffer().write(encoded)));
+	
+	    try {
+	      service.wrongClass();
+	      fail();
+	    } catch (IllegalArgumentException e) {
+	      assertThat(e).hasMessage(new StringBuilder().append("").append("Unable to create converter for class java.lang.String\n").append("    for method Service.wrongClass").toString());
+	      assertThat(e.getCause()).hasMessage(new StringBuilder().append("").append("Could not locate ResponseBody converter for class java.lang.String.\n").append("  Tried:\n").append("   * retrofit2.BuiltInConverters\n").append("   * retrofit2.converter.protobuf.ProtoConverterFactory\n").append("   * retrofit2.OptionalConverterFactory").toString());
+	    }
+	  }
+
+	@Test public void deserializeWrongType() throws IOException {
+	    ByteString encoded = ByteString.decodeBase64("Cg4oNTE5KSA4NjctNTMwOQ==");
+	    server.enqueue(new MockResponse().setBody(new Buffer().write(encoded)));
+	
+	    try {
+	      service.wrongType();
+	      fail();
+	    } catch (IllegalArgumentException e) {
+	      assertThat(e).hasMessage(new StringBuilder().append("").append("Unable to create converter for java.util.List<java.lang.String>\n").append("    for method Service.wrongType").toString());
+	      assertThat(e.getCause()).hasMessage(new StringBuilder().append("").append("Could not locate ResponseBody converter for java.util.List<java.lang.String>.\n").append("  Tried:\n").append("   * retrofit2.BuiltInConverters\n").append("   * retrofit2.converter.protobuf.ProtoConverterFactory\n").append("   * retrofit2.OptionalConverterFactory").toString());
+	    }
+	  }
+
+	@Test public void deserializeWrongValue() throws IOException {
+	    ByteString encoded = ByteString.decodeBase64("////");
+	    server.enqueue(new MockResponse().setBody(new Buffer().write(encoded)));
+	
+	    Call<?> call = service.get();
+	    try {
+	      call.execute();
+	      fail();
+	    } catch (RuntimeException e) {
+	      assertThat(e.getCause()).isInstanceOf(InvalidProtocolBufferException.class)
+	          .hasMessageContaining("input ended unexpectedly");
+	    }
+	  }
+
+interface Service {
     @GET("/") Call<Phone> get();
     @POST("/") Call<Phone> post(@Body Phone impl);
     @GET("/") Call<String> wrongClass();
@@ -47,114 +143,5 @@ public final class ProtoConverterFactoryTest {
   }
   interface ServiceWithRegistry {
     @GET("/") Call<Phone> get();
-  }
-
-  @Rule public final MockWebServer server = new MockWebServer();
-
-  private Service service;
-  private ServiceWithRegistry serviceWithRegistry;
-
-  @Before public void setUp() {
-    Retrofit retrofit = new Retrofit.Builder()
-        .baseUrl(server.url("/"))
-        .addConverterFactory(ProtoConverterFactory.create())
-        .build();
-    service = retrofit.create(Service.class);
-
-    ExtensionRegistry registry = ExtensionRegistry.newInstance();
-    PhoneProtos.registerAllExtensions(registry);
-    Retrofit retrofitWithRegistry = new Retrofit.Builder()
-        .baseUrl(server.url("/"))
-        .addConverterFactory(ProtoConverterFactory.createWithRegistry(registry))
-        .build();
-    serviceWithRegistry = retrofitWithRegistry.create(ServiceWithRegistry.class);
-  }
-
-  @Test public void serializeAndDeserialize() throws IOException, InterruptedException {
-    ByteString encoded = ByteString.decodeBase64("Cg4oNTE5KSA4NjctNTMwOQ==");
-    server.enqueue(new MockResponse().setBody(new Buffer().write(encoded)));
-
-    Call<Phone> call = service.post(Phone.newBuilder().setNumber("(519) 867-5309").build());
-    Response<Phone> response = call.execute();
-    Phone body = response.body();
-    assertThat(body.getNumber()).isEqualTo("(519) 867-5309");
-
-    RecordedRequest request = server.takeRequest();
-    assertThat(request.getBody().readByteString()).isEqualTo(encoded);
-    assertThat(request.getHeader("Content-Type")).isEqualTo("application/x-protobuf");
-  }
-
-  @Test public void deserializeEmpty() throws IOException {
-    server.enqueue(new MockResponse());
-
-    Call<Phone> call = service.get();
-    Response<Phone> response = call.execute();
-    Phone body = response.body();
-    assertThat(body.hasNumber()).isFalse();
-  }
-
-  @Test public void deserializeUsesRegistry() throws IOException {
-    ByteString encoded = ByteString.decodeBase64("Cg4oNTE5KSA4NjctNTMwORAB");
-    server.enqueue(new MockResponse().setBody(new Buffer().write(encoded)));
-
-    Call<Phone> call = serviceWithRegistry.get();
-    Response<Phone> response = call.execute();
-    Phone body = response.body();
-    assertThat(body.getNumber()).isEqualTo("(519) 867-5309");
-    assertThat(body.getExtension(PhoneProtos.voicemail)).isEqualTo(true);
-  }
-
-  @Test public void deserializeWrongClass() throws IOException {
-    ByteString encoded = ByteString.decodeBase64("Cg4oNTE5KSA4NjctNTMwOQ==");
-    server.enqueue(new MockResponse().setBody(new Buffer().write(encoded)));
-
-    try {
-      service.wrongClass();
-      fail();
-    } catch (IllegalArgumentException e) {
-      assertThat(e).hasMessage(""
-          + "Unable to create converter for class java.lang.String\n"
-          + "    for method Service.wrongClass");
-      assertThat(e.getCause()).hasMessage(""
-          + "Could not locate ResponseBody converter for class java.lang.String.\n"
-          + "  Tried:\n"
-          + "   * retrofit2.BuiltInConverters\n"
-          + "   * retrofit2.converter.protobuf.ProtoConverterFactory\n"
-          + "   * retrofit2.OptionalConverterFactory");
-    }
-  }
-
-  @Test public void deserializeWrongType() throws IOException {
-    ByteString encoded = ByteString.decodeBase64("Cg4oNTE5KSA4NjctNTMwOQ==");
-    server.enqueue(new MockResponse().setBody(new Buffer().write(encoded)));
-
-    try {
-      service.wrongType();
-      fail();
-    } catch (IllegalArgumentException e) {
-      assertThat(e).hasMessage(""
-          + "Unable to create converter for java.util.List<java.lang.String>\n"
-          + "    for method Service.wrongType");
-      assertThat(e.getCause()).hasMessage(""
-          + "Could not locate ResponseBody converter for java.util.List<java.lang.String>.\n"
-          + "  Tried:\n"
-          + "   * retrofit2.BuiltInConverters\n"
-          + "   * retrofit2.converter.protobuf.ProtoConverterFactory\n"
-          + "   * retrofit2.OptionalConverterFactory");
-    }
-  }
-
-  @Test public void deserializeWrongValue() throws IOException {
-    ByteString encoded = ByteString.decodeBase64("////");
-    server.enqueue(new MockResponse().setBody(new Buffer().write(encoded)));
-
-    Call<?> call = service.get();
-    try {
-      call.execute();
-      fail();
-    } catch (RuntimeException e) {
-      assertThat(e.getCause()).isInstanceOf(InvalidProtocolBufferException.class)
-          .hasMessageContaining("input ended unexpectedly");
-    }
   }
 }

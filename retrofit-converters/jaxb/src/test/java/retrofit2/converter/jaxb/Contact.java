@@ -29,23 +29,23 @@ final class Contact {
   @XmlElement(name = "phone_number")
   public final List<PhoneNumber> phone_numbers;
 
-  @SuppressWarnings("unused") // Used by JAXB.
-  private Contact() {
-    this("", new ArrayList<PhoneNumber>());
-  }
-
   public Contact(String name, List<PhoneNumber> phoneNumbers) {
     this.name = name;
     this.phone_numbers = phoneNumbers;
   }
 
-  @Override public boolean equals(Object o) {
+@SuppressWarnings("unused") // Used by JAXB.
+  private Contact() {
+    this("", new ArrayList<PhoneNumber>());
+  }
+
+@Override public boolean equals(Object o) {
     return o instanceof Contact
         && ((Contact) o).name.equals(name)
         && ((Contact) o).phone_numbers.equals(phone_numbers);
   }
 
-  @Override public int hashCode() {
+@Override public int hashCode() {
     return Arrays.asList(name, phone_numbers).hashCode();
   }
 }

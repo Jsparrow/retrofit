@@ -40,7 +40,80 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 public final class GsonConverterFactoryTest {
-  interface AnInterface {
+  @Rule public final MockWebServer server = new MockWebServer();
+
+	private Service service;
+
+	@Before public void setUp() {
+	    Gson gson = new GsonBuilder()
+	        .registerTypeAdapter(AnInterface.class, new AnInterfaceAdapter())
+	        .registerTypeAdapter(Value.class, Value.BROKEN_ADAPTER)
+	        .setLenient()
+	        .create();
+	    Retrofit retrofit = new Retrofit.Builder()
+	        .baseUrl(server.url("/"))
+	        .addConverterFactory(GsonConverterFactory.create(gson))
+	        .build();
+	    service = retrofit.create(Service.class);
+	  }
+
+	@Test public void anInterface() throws IOException, InterruptedException {
+	    server.enqueue(new MockResponse().setBody("{\"name\":\"value\"}"));
+	
+	    Call<AnInterface> call = service.anInterface(new AnImplementation("value"));
+	    Response<AnInterface> response = call.execute();
+	    AnInterface body = response.body();
+	    assertThat(body.getName()).isEqualTo("value");
+	
+	    RecordedRequest request = server.takeRequest();
+	    assertThat(request.getBody().readUtf8()).isEqualTo("{\"name\":\"value\"}");
+	    assertThat(request.getHeader("Content-Type")).isEqualTo("application/json; charset=UTF-8");
+	  }
+
+	@Test public void anImplementation() throws IOException, InterruptedException {
+	    server.enqueue(new MockResponse().setBody("{\"theName\":\"value\"}"));
+	
+	    Call<AnImplementation> call = service.anImplementation(new AnImplementation("value"));
+	    Response<AnImplementation> response = call.execute();
+	    AnImplementation body = response.body();
+	    assertThat(body.theName).isEqualTo("value");
+	
+	    RecordedRequest request = server.takeRequest();
+	    assertThat(request.getBody().readUtf8()).isEqualTo("{\"theName\":\"value\"}");
+	    assertThat(request.getHeader("Content-Type")).isEqualTo("application/json; charset=UTF-8");
+	  }
+
+	@Test public void serializeUsesConfiguration() throws IOException, InterruptedException {
+	    server.enqueue(new MockResponse().setBody("{}"));
+	
+	    service.anImplementation(new AnImplementation(null)).execute();
+	
+	    RecordedRequest request = server.takeRequest();
+	    assertThat(request.getBody().readUtf8()).isEqualTo("{}"); // Null value was not serialized.
+	    assertThat(request.getHeader("Content-Type")).isEqualTo("application/json; charset=UTF-8");
+	  }
+
+	@Test public void deserializeUsesConfiguration() throws IOException, InterruptedException {
+	    server.enqueue(new MockResponse().setBody("{/* a comment! */}"));
+	
+	    Response<AnImplementation> response =
+	        service.anImplementation(new AnImplementation("value")).execute();
+	    assertThat(response.body().getName()).isNull();
+	  }
+
+	@Test public void requireFullResponseDocumentConsumption() throws Exception {
+	    server.enqueue(new MockResponse().setBody("{\"theName\":\"value\"}"));
+	
+	    Call<Value> call = service.value();
+	    try {
+	      call.execute();
+	      fail();
+	    } catch (JsonIOException e) {
+	      assertThat(e).hasMessage("JSON document was not fully consumed.");
+	    }
+	  }
+
+interface AnInterface {
     String getName();
   }
 
@@ -105,78 +178,5 @@ public final class GsonConverterFactoryTest {
     @POST("/") Call<AnImplementation> anImplementation(@Body AnImplementation impl);
     @POST("/") Call<AnInterface> anInterface(@Body AnInterface impl);
     @GET("/") Call<Value> value();
-  }
-
-  @Rule public final MockWebServer server = new MockWebServer();
-
-  private Service service;
-
-  @Before public void setUp() {
-    Gson gson = new GsonBuilder()
-        .registerTypeAdapter(AnInterface.class, new AnInterfaceAdapter())
-        .registerTypeAdapter(Value.class, Value.BROKEN_ADAPTER)
-        .setLenient()
-        .create();
-    Retrofit retrofit = new Retrofit.Builder()
-        .baseUrl(server.url("/"))
-        .addConverterFactory(GsonConverterFactory.create(gson))
-        .build();
-    service = retrofit.create(Service.class);
-  }
-
-  @Test public void anInterface() throws IOException, InterruptedException {
-    server.enqueue(new MockResponse().setBody("{\"name\":\"value\"}"));
-
-    Call<AnInterface> call = service.anInterface(new AnImplementation("value"));
-    Response<AnInterface> response = call.execute();
-    AnInterface body = response.body();
-    assertThat(body.getName()).isEqualTo("value");
-
-    RecordedRequest request = server.takeRequest();
-    assertThat(request.getBody().readUtf8()).isEqualTo("{\"name\":\"value\"}");
-    assertThat(request.getHeader("Content-Type")).isEqualTo("application/json; charset=UTF-8");
-  }
-
-  @Test public void anImplementation() throws IOException, InterruptedException {
-    server.enqueue(new MockResponse().setBody("{\"theName\":\"value\"}"));
-
-    Call<AnImplementation> call = service.anImplementation(new AnImplementation("value"));
-    Response<AnImplementation> response = call.execute();
-    AnImplementation body = response.body();
-    assertThat(body.theName).isEqualTo("value");
-
-    RecordedRequest request = server.takeRequest();
-    assertThat(request.getBody().readUtf8()).isEqualTo("{\"theName\":\"value\"}");
-    assertThat(request.getHeader("Content-Type")).isEqualTo("application/json; charset=UTF-8");
-  }
-
-  @Test public void serializeUsesConfiguration() throws IOException, InterruptedException {
-    server.enqueue(new MockResponse().setBody("{}"));
-
-    service.anImplementation(new AnImplementation(null)).execute();
-
-    RecordedRequest request = server.takeRequest();
-    assertThat(request.getBody().readUtf8()).isEqualTo("{}"); // Null value was not serialized.
-    assertThat(request.getHeader("Content-Type")).isEqualTo("application/json; charset=UTF-8");
-  }
-
-  @Test public void deserializeUsesConfiguration() throws IOException, InterruptedException {
-    server.enqueue(new MockResponse().setBody("{/* a comment! */}"));
-
-    Response<AnImplementation> response =
-        service.anImplementation(new AnImplementation("value")).execute();
-    assertThat(response.body().getName()).isNull();
-  }
-
-  @Test public void requireFullResponseDocumentConsumption() throws Exception {
-    server.enqueue(new MockResponse().setBody("{\"theName\":\"value\"}"));
-
-    Call<Value> call = service.value();
-    try {
-      call.execute();
-      fail();
-    } catch (JsonIOException e) {
-      assertThat(e).hasMessage("JSON document was not fully consumed.");
-    }
   }
 }

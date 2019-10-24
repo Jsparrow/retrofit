@@ -90,7 +90,9 @@ final class OkHttpCall<T> implements Call<T> {
     Throwable failure;
 
     synchronized (this) {
-      if (executed) throw new IllegalStateException("Already executed.");
+      if (executed) {
+		throw new IllegalStateException("Already executed.");
+	}
       executed = true;
 
       call = rawCall;
@@ -156,7 +158,9 @@ final class OkHttpCall<T> implements Call<T> {
     okhttp3.Call call;
 
     synchronized (this) {
-      if (executed) throw new IllegalStateException("Already executed.");
+      if (executed) {
+		throw new IllegalStateException("Already executed.");
+	}
       executed = true;
 
       if (creationFailure != null) {
@@ -232,7 +236,8 @@ final class OkHttpCall<T> implements Call<T> {
     }
   }
 
-  public void cancel() {
+  @Override
+public void cancel() {
     canceled = true;
 
     okhttp3.Call call;

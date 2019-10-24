@@ -33,22 +33,22 @@ import retrofit2.Retrofit;
  */
 @Deprecated
 public final class Java8OptionalConverterFactory extends Converter.Factory {
-  public static Java8OptionalConverterFactory create() {
-    return new Java8OptionalConverterFactory();
-  }
-
   private Java8OptionalConverterFactory() {
-  }
+	  }
 
-  @Override public @Nullable Converter<ResponseBody, ?> responseBodyConverter(
-      Type type, Annotation[] annotations, Retrofit retrofit) {
-    if (getRawType(type) != Optional.class) {
-      return null;
-    }
+	public static Java8OptionalConverterFactory create() {
+	    return new Java8OptionalConverterFactory();
+	  }
 
-    Type innerType = getParameterUpperBound(0, (ParameterizedType) type);
-    Converter<ResponseBody, Object> delegate =
-        retrofit.responseBodyConverter(innerType, annotations);
-    return new OptionalConverter<>(delegate);
-  }
+	@Override public @Nullable Converter<ResponseBody, ?> responseBodyConverter(
+	      Type type, Annotation[] annotations, Retrofit retrofit) {
+	    if (getRawType(type) != Optional.class) {
+	      return null;
+	    }
+	
+	    Type innerType = getParameterUpperBound(0, (ParameterizedType) type);
+	    Converter<ResponseBody, Object> delegate =
+	        retrofit.responseBodyConverter(innerType, annotations);
+	    return new OptionalConverter<>(delegate);
+	  }
 }

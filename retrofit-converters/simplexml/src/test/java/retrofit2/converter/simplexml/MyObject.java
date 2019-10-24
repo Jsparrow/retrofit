@@ -56,8 +56,12 @@ final class MyObject {
   }
 
   @Override public boolean equals(Object obj) {
-    if (obj == this) return true;
-    if (!(obj instanceof MyObject)) return false;
+    if (obj == this) {
+		return true;
+	}
+    if (!(obj instanceof MyObject)) {
+		return false;
+	}
     MyObject other = (MyObject) obj;
     return count == other.count
         && (message == null ? other.message == null : message.equals(other.message));

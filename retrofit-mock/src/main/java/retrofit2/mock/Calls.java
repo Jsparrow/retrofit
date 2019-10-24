@@ -26,44 +26,44 @@ import retrofit2.Response;
 
 /** Factory methods for creating {@link Call} instances which immediately respond or fail. */
 public final class Calls {
-  /**
-   * Invokes {@code callable} once for the returned {@link Call} and once for each instance that is
-   * obtained from {@linkplain Call#clone() cloning} the returned {@link Call}.
-   */
-  public static <T> Call<T> defer(Callable<Call<T>> callable) {
-    return new DeferredCall<>(callable);
-  }
-
-  public static <T> Call<T> response(@Nullable T successValue) {
-    return new FakeCall<>(Response.success(successValue), null);
-  }
-
-  public static <T> Call<T> response(Response<T> response) {
-    return new FakeCall<>(response, null);
-  }
-
-  /** Creates a failed {@link Call} from {@code failure}. */
-  public static <T> Call<T> failure(IOException failure) {
-    // TODO delete this overload in Retrofit 3.0.
-    return new FakeCall<>(null, failure);
-  }
-
-  /**
-   * Creates a failed {@link Call} from {@code failure}.
-   * <p>
-   * Note: When invoking {@link Call#execute() execute()} on the returned {@link Call}, if
-   * {@code failure} is a {@link RuntimeException}, {@link Error}, or {@link IOException} subtype
-   * it is thrown directly. Otherwise it is "sneaky thrown" despite not being declared.
-   */
-  public static <T> Call<T> failure(Throwable failure) {
-    return new FakeCall<>(null, failure);
-  }
-
   private Calls() {
-    throw new AssertionError("No instances.");
-  }
+	    throw new AssertionError("No instances.");
+	  }
 
-  static final class FakeCall<T> implements Call<T> {
+	/**
+	   * Invokes {@code callable} once for the returned {@link Call} and once for each instance that is
+	   * obtained from {@linkplain Call#clone() cloning} the returned {@link Call}.
+	   */
+	  public static <T> Call<T> defer(Callable<Call<T>> callable) {
+	    return new DeferredCall<>(callable);
+	  }
+
+	public static <T> Call<T> response(@Nullable T successValue) {
+	    return new FakeCall<>(Response.success(successValue), null);
+	  }
+
+	public static <T> Call<T> response(Response<T> response) {
+	    return new FakeCall<>(response, null);
+	  }
+
+	/** Creates a failed {@link Call} from {@code failure}. */
+	  public static <T> Call<T> failure(IOException failure) {
+	    // TODO delete this overload in Retrofit 3.0.
+	    return new FakeCall<>(null, failure);
+	  }
+
+	/**
+	   * Creates a failed {@link Call} from {@code failure}.
+	   * <p>
+	   * Note: When invoking {@link Call#execute() execute()} on the returned {@link Call}, if
+	   * {@code failure} is a {@link RuntimeException}, {@link Error}, or {@link IOException} subtype
+	   * it is thrown directly. Otherwise it is "sneaky thrown" despite not being declared.
+	   */
+	  public static <T> Call<T> failure(Throwable failure) {
+	    return new FakeCall<>(null, failure);
+	  }
+
+static final class FakeCall<T> implements Call<T> {
     private final Response<T> response;
     private final Throwable error;
     private final AtomicBoolean canceled = new AtomicBoolean();

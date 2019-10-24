@@ -36,14 +36,9 @@ import static org.robolectric.annotation.Config.NONE;
 @Config(sdk = NEWEST_SDK, manifest = NONE)
 public final class CompletableFutureAndroidTest {
   @Rule public final MockWebServer server = new MockWebServer();
+private Service service;
 
-  interface Service {
-    @GET("/") CompletableFuture<String> endpoint();
-  }
-
-  private Service service;
-
-  @Before public void setUp() {
+@Before public void setUp() {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -51,7 +46,7 @@ public final class CompletableFutureAndroidTest {
     service = retrofit.create(Service.class);
   }
 
-  @Config(sdk = 24)
+@Config(sdk = 24)
   @Test public void completableFutureApi24() throws Exception {
     server.enqueue(new MockResponse().setBody("Hi"));
 
@@ -59,7 +54,7 @@ public final class CompletableFutureAndroidTest {
     assertThat(future.get()).isEqualTo("Hi");
   }
 
-  @Config(sdk = 21)
+@Config(sdk = 21)
   @Test public void completableFuturePreApi24() {
     try {
       service.endpoint();
@@ -69,5 +64,9 @@ public final class CompletableFutureAndroidTest {
           "Unable to create call adapter for java.util.concurrent.CompletableFuture<java.lang.String>\n"
               + "    for method Service.endpoint");
     }
+  }
+
+  interface Service {
+    @GET("/") CompletableFuture<String> endpoint();
   }
 }

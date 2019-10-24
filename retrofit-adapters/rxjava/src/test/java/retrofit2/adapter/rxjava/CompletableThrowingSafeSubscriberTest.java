@@ -40,14 +40,9 @@ public final class CompletableThrowingSafeSubscriberTest {
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final TestRule resetRule = new RxJavaPluginsResetRule();
   @Rule public final RecordingSubscriber.Rule subscriberRule = new RecordingSubscriber.Rule();
+private Service service;
 
-  interface Service {
-    @GET("/") Completable completable();
-  }
-
-  private Service service;
-
-  @Before public void setUp() {
+@Before public void setUp() {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
@@ -55,17 +50,16 @@ public final class CompletableThrowingSafeSubscriberTest {
     service = retrofit.create(Service.class);
   }
 
-  @Test public void throwingInOnCompleteDeliveredToPlugin() {
+@Test public void throwingInOnCompleteDeliveredToPlugin() {
     server.enqueue(new MockResponse());
 
     final AtomicReference<Throwable> pluginRef = new AtomicReference<>();
     RxJavaPlugins.getInstance().registerErrorHandler(new RxJavaErrorHandler() {
       @Override public void handleError(Throwable throwable) {
-        if (throwable instanceof OnCompletedFailedException) {
-          if (!pluginRef.compareAndSet(null, throwable)) {
+        boolean condition = throwable instanceof OnCompletedFailedException && !pluginRef.compareAndSet(null, throwable);
+		if (condition) {
             throw Exceptions.propagate(throwable); // Don't swallow secondary errors!
           }
-        }
       }
     });
 
@@ -80,17 +74,16 @@ public final class CompletableThrowingSafeSubscriberTest {
     assertThat(pluginRef.get().getCause()).isSameAs(e);
   }
 
-  @Test public void bodyThrowingInOnErrorDeliveredToPlugin() {
+@Test public void bodyThrowingInOnErrorDeliveredToPlugin() {
     server.enqueue(new MockResponse().setResponseCode(404));
 
     final AtomicReference<Throwable> pluginRef = new AtomicReference<>();
     RxJavaPlugins.getInstance().registerErrorHandler(new RxJavaErrorHandler() {
       @Override public void handleError(Throwable throwable) {
-        if (throwable instanceof OnErrorFailedException) {
-          if (!pluginRef.compareAndSet(null, throwable)) {
+        boolean condition = throwable instanceof OnErrorFailedException && !pluginRef.compareAndSet(null, throwable);
+		if (condition) {
             throw Exceptions.propagate(throwable); // Don't swallow secondary errors!
           }
-        }
       }
     });
 
@@ -108,7 +101,11 @@ public final class CompletableThrowingSafeSubscriberTest {
     assertThat(composite.getExceptions()).containsExactly(errorRef.get(), e);
   }
 
-  static abstract class ForwardingCompletableObserver implements CompletableSubscriber {
+  interface Service {
+    @GET("/") Completable completable();
+  }
+
+  abstract static class ForwardingCompletableObserver implements CompletableSubscriber {
     private final RecordingSubscriber<Void> delegate;
 
     ForwardingCompletableObserver(RecordingSubscriber<Void> delegate) {

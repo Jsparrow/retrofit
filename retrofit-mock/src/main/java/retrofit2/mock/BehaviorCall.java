@@ -56,10 +56,14 @@ final class BehaviorCall<T> implements Call<T> {
 
   @SuppressWarnings("ConstantConditions") // Guarding public API nullability.
   @Override public void enqueue(final Callback<T> callback) {
-    if (callback == null) throw new NullPointerException("callback == null");
+    if (callback == null) {
+		throw new NullPointerException("callback == null");
+	}
 
     synchronized (this) {
-      if (executed) throw new IllegalStateException("Already executed");
+      if (executed) {
+		throw new IllegalStateException("Already executed");
+	}
       executed = true;
     }
     task = backgroundExecutor.submit(new Runnable() {
@@ -132,10 +136,16 @@ final class BehaviorCall<T> implements Call<T> {
       throw new IOException("canceled");
     }
     Response<T> response = responseRef.get();
-    if (response != null) return response;
+    if (response != null) {
+		return response;
+	}
     Throwable failure = failureRef.get();
-    if (failure instanceof RuntimeException) throw (RuntimeException) failure;
-    if (failure instanceof IOException) throw (IOException) failure;
+    if (failure instanceof RuntimeException) {
+		throw (RuntimeException) failure;
+	}
+    if (failure instanceof IOException) {
+		throw (IOException) failure;
+	}
     throw new RuntimeException(failure);
   }
 

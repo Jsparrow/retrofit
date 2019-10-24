@@ -29,22 +29,22 @@ import retrofit2.Retrofit;
  * converter to deserialize {@code T} and then wraps it into {@link Optional}.
  */
 public final class GuavaOptionalConverterFactory extends Converter.Factory {
-  public static GuavaOptionalConverterFactory create() {
-    return new GuavaOptionalConverterFactory();
-  }
-
   private GuavaOptionalConverterFactory() {
-  }
+	  }
 
-  @Override public @Nullable Converter<ResponseBody, ?> responseBodyConverter(
-      Type type, Annotation[] annotations, Retrofit retrofit) {
-    if (getRawType(type) != Optional.class) {
-      return null;
-    }
+	public static GuavaOptionalConverterFactory create() {
+	    return new GuavaOptionalConverterFactory();
+	  }
 
-    Type innerType = getParameterUpperBound(0, (ParameterizedType) type);
-    Converter<ResponseBody, Object> delegate =
-        retrofit.responseBodyConverter(innerType, annotations);
-    return new OptionalConverter<>(delegate);
-  }
+	@Override public @Nullable Converter<ResponseBody, ?> responseBodyConverter(
+	      Type type, Annotation[] annotations, Retrofit retrofit) {
+	    if (getRawType(type) != Optional.class) {
+	      return null;
+	    }
+	
+	    Type innerType = getParameterUpperBound(0, (ParameterizedType) type);
+	    Converter<ResponseBody, Object> delegate =
+	        retrofit.responseBodyConverter(innerType, annotations);
+	    return new OptionalConverter<>(delegate);
+	  }
 }

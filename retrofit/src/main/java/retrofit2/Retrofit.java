@@ -172,19 +172,22 @@ public final class Retrofit {
       Collections.addAll(check, candidate.getInterfaces());
     }
 
-    if (validateEagerly) {
-      Platform platform = Platform.get();
-      for (Method method : service.getDeclaredMethods()) {
+    if (!validateEagerly) {
+		return;
+	}
+	Platform platform = Platform.get();
+	for (Method method : service.getDeclaredMethods()) {
         if (!platform.isDefaultMethod(method) && !Modifier.isStatic(method.getModifiers())) {
           loadServiceMethod(method);
         }
       }
-    }
   }
 
   ServiceMethod<?> loadServiceMethod(Method method) {
     ServiceMethod<?> result = serviceMethodCache.get(method);
-    if (result != null) return result;
+    if (result != null) {
+		return result;
+	}
 
     synchronized (serviceMethodCache) {
       result = serviceMethodCache.get(method);
@@ -422,15 +425,15 @@ public final class Retrofit {
     private @Nullable Executor callbackExecutor;
     private boolean validateEagerly;
 
-    Builder(Platform platform) {
-      this.platform = platform;
-    }
-
     public Builder() {
       this(Platform.get());
     }
 
-    Builder(Retrofit retrofit) {
+	Builder(Platform platform) {
+      this.platform = platform;
+    }
+
+	Builder(Retrofit retrofit) {
       platform = Platform.get();
       callFactory = retrofit.callFactory;
       baseUrl = retrofit.baseUrl;
@@ -453,7 +456,7 @@ public final class Retrofit {
       validateEagerly = retrofit.validateEagerly;
     }
 
-    /**
+	/**
      * The HTTP client used for requests.
      * <p>
      * This is a convenience method for calling {@link #callFactory}.
@@ -462,7 +465,7 @@ public final class Retrofit {
       return callFactory(Objects.requireNonNull(client, "client == null"));
     }
 
-    /**
+	/**
      * Specify a custom call factory for creating {@link Call} instances.
      * <p>
      * Note: Calling {@link #client} automatically sets this value.
@@ -472,7 +475,7 @@ public final class Retrofit {
       return this;
     }
 
-    /**
+	/**
      * Set the API base URL.
      *
      * @see #baseUrl(HttpUrl)
@@ -482,7 +485,7 @@ public final class Retrofit {
       return baseUrl(HttpUrl.get(baseUrl.toString()));
     }
 
-    /**
+	/**
      * Set the API base URL.
      *
      * @see #baseUrl(HttpUrl)
@@ -492,7 +495,7 @@ public final class Retrofit {
       return baseUrl(HttpUrl.get(baseUrl));
     }
 
-    /**
+	/**
      * Set the API base URL.
      * <p>
      * The specified endpoint values (such as with {@link GET @GET}) are resolved against this
@@ -552,13 +555,13 @@ public final class Retrofit {
       return this;
     }
 
-    /** Add converter factory for serialization and deserialization of objects. */
+	/** Add converter factory for serialization and deserialization of objects. */
     public Builder addConverterFactory(Converter.Factory factory) {
       converterFactories.add(Objects.requireNonNull(factory, "factory == null"));
       return this;
     }
 
-    /**
+	/**
      * Add a call adapter factory for supporting service method return types other than {@link
      * Call}.
      */
@@ -567,7 +570,7 @@ public final class Retrofit {
       return this;
     }
 
-    /**
+	/**
      * The executor on which {@link Callback} methods are invoked when returning {@link Call} from
      * your service method.
      * <p>
@@ -579,17 +582,17 @@ public final class Retrofit {
       return this;
     }
 
-    /** Returns a modifiable list of call adapter factories. */
+	/** Returns a modifiable list of call adapter factories. */
     public List<CallAdapter.Factory> callAdapterFactories() {
       return this.callAdapterFactories;
     }
 
-    /** Returns a modifiable list of converter factories. */
+	/** Returns a modifiable list of converter factories. */
     public List<Converter.Factory> converterFactories() {
       return this.converterFactories;
     }
 
-    /**
+	/**
      * When calling {@link #create} on the resulting {@link Retrofit} instance, eagerly validate
      * the configuration of all methods in the supplied interface.
      */
@@ -598,7 +601,7 @@ public final class Retrofit {
       return this;
     }
 
-    /**
+	/**
      * Create the {@link Retrofit} instance using the configured values.
      * <p>
      * Note: If neither {@link #client} nor {@link #callFactory} is called a default {@link

@@ -32,7 +32,32 @@ import retrofit2.http.GET;
  * that's nearest geographically.
  */
 public final class DynamicBaseUrl {
-  public interface Pop {
+  public static void main(String... args) throws IOException {
+	    HostSelectionInterceptor hostSelectionInterceptor = new HostSelectionInterceptor();
+	
+	    OkHttpClient okHttpClient = new OkHttpClient.Builder()
+	        .addInterceptor(hostSelectionInterceptor)
+	        .build();
+	
+	    Retrofit retrofit = new Retrofit.Builder()
+	        .baseUrl("http://www.github.com/")
+	        .callFactory(okHttpClient)
+	        .build();
+	
+	    Pop pop = retrofit.create(Pop.class);
+	
+	    Response<ResponseBody> response1 = pop.robots().execute();
+	    System.out.println("Response from: " + response1.raw().request().url());
+	    System.out.println(response1.body().string());
+	
+	    hostSelectionInterceptor.setHost("www.pepsi.com");
+	
+	    Response<ResponseBody> response2 = pop.robots().execute();
+	    System.out.println("Response from: " + response2.raw().request().url());
+	    System.out.println(response2.body().string());
+	  }
+
+public interface Pop {
     @GET("robots.txt")
     Call<ResponseBody> robots();
   }
@@ -57,30 +82,5 @@ public final class DynamicBaseUrl {
       }
       return chain.proceed(request);
     }
-  }
-
-  public static void main(String... args) throws IOException {
-    HostSelectionInterceptor hostSelectionInterceptor = new HostSelectionInterceptor();
-
-    OkHttpClient okHttpClient = new OkHttpClient.Builder()
-        .addInterceptor(hostSelectionInterceptor)
-        .build();
-
-    Retrofit retrofit = new Retrofit.Builder()
-        .baseUrl("http://www.github.com/")
-        .callFactory(okHttpClient)
-        .build();
-
-    Pop pop = retrofit.create(Pop.class);
-
-    Response<ResponseBody> response1 = pop.robots().execute();
-    System.out.println("Response from: " + response1.raw().request().url());
-    System.out.println(response1.body().string());
-
-    hostSelectionInterceptor.setHost("www.pepsi.com");
-
-    Response<ResponseBody> response2 = pop.robots().execute();
-    System.out.println("Response from: " + response2.raw().request().url());
-    System.out.println(response2.body().string());
   }
 }

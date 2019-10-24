@@ -28,35 +28,35 @@ import retrofit2.http.GET;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public final class OptionalConverterFactoryTest {
-  interface Service {
-    @GET("/") Call<Optional<Object>> optional();
-    @GET("/") Call<Object> object();
-  }
-
   @Rule public final MockWebServer server = new MockWebServer();
 
-  private Service service;
+	private Service service;
 
-  @Before public void setUp() {
-    Retrofit retrofit = new Retrofit.Builder()
-        .baseUrl(server.url("/"))
-        .addConverterFactory(new ObjectInstanceConverterFactory())
-        .build();
-    service = retrofit.create(Service.class);
-  }
+	@Before public void setUp() {
+	    Retrofit retrofit = new Retrofit.Builder()
+	        .baseUrl(server.url("/"))
+	        .addConverterFactory(new ObjectInstanceConverterFactory())
+	        .build();
+	    service = retrofit.create(Service.class);
+	  }
 
-  @Test public void optional() throws IOException {
-    server.enqueue(new MockResponse());
+	@Test public void optional() throws IOException {
+	    server.enqueue(new MockResponse());
+	
+	    Optional<Object> optional = service.optional().execute().body();
+	    assertThat(optional).isNotNull();
+	    assertThat(optional.get()).isSameAs(ObjectInstanceConverterFactory.VALUE);
+	  }
 
-    Optional<Object> optional = service.optional().execute().body();
-    assertThat(optional).isNotNull();
-    assertThat(optional.get()).isSameAs(ObjectInstanceConverterFactory.VALUE);
-  }
+	@Test public void onlyMatchesOptional() throws IOException {
+	    server.enqueue(new MockResponse());
+	
+	    Object body = service.object().execute().body();
+	    assertThat(body).isSameAs(ObjectInstanceConverterFactory.VALUE);
+	  }
 
-  @Test public void onlyMatchesOptional() throws IOException {
-    server.enqueue(new MockResponse());
-
-    Object body = service.object().execute().body();
-    assertThat(body).isSameAs(ObjectInstanceConverterFactory.VALUE);
+interface Service {
+    @GET("/") Call<Optional<Object>> optional();
+    @GET("/") Call<Object> object();
   }
 }

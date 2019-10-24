@@ -51,14 +51,6 @@ import static retrofit2.TestingUtils.repeat;
 public final class CallTest {
   @Rule public final MockWebServer server = new MockWebServer();
 
-  interface Service {
-    @GET("/") Call<String> getString();
-    @GET("/") Call<ResponseBody> getBody();
-    @GET("/") @Streaming Call<ResponseBody> getStreamingBody();
-    @POST("/") Call<String> postString(@Body String body);
-    @POST("/{a}") Call<String> postRequestBody(@Path("a") Object a);
-  }
-
   @Test public void http200Sync() throws IOException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
@@ -73,7 +65,7 @@ public final class CallTest {
     assertThat(response.body()).isEqualTo("Hi");
   }
 
-  @Test public void http200Async() throws InterruptedException {
+@Test public void http200Async() throws InterruptedException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -101,7 +93,7 @@ public final class CallTest {
     assertThat(response.body()).isEqualTo("Hi");
   }
 
-  @Test public void http404Sync() throws IOException {
+@Test public void http404Sync() throws IOException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -116,7 +108,7 @@ public final class CallTest {
     assertThat(response.errorBody().string()).isEqualTo("Hi");
   }
 
-  @Test public void http404Async() throws InterruptedException, IOException {
+@Test public void http404Async() throws InterruptedException, IOException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -145,7 +137,7 @@ public final class CallTest {
     assertThat(response.errorBody().string()).isEqualTo("Hi");
   }
 
-  @Test public void transportProblemSync() {
+@Test public void transportProblemSync() {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -162,7 +154,7 @@ public final class CallTest {
     }
   }
 
-  @Test public void transportProblemAsync() throws InterruptedException {
+@Test public void transportProblemAsync() throws InterruptedException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -189,7 +181,7 @@ public final class CallTest {
     assertThat(failure).isInstanceOf(IOException.class);
   }
 
-  @Test public void conversionProblemOutgoingSync() throws IOException {
+@Test public void conversionProblemOutgoingSync() throws IOException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory() {
@@ -214,7 +206,7 @@ public final class CallTest {
     }
   }
 
-  @Test public void conversionProblemOutgoingAsync() throws InterruptedException {
+@Test public void conversionProblemOutgoingAsync() throws InterruptedException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory() {
@@ -248,7 +240,7 @@ public final class CallTest {
         .hasMessage("I am broken!");
   }
 
-  @Test public void conversionProblemIncomingSync() throws IOException {
+@Test public void conversionProblemIncomingSync() throws IOException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory() {
@@ -274,7 +266,7 @@ public final class CallTest {
     }
   }
 
-  @Test public void conversionProblemIncomingMaskedByConverterIsUnwrapped() throws IOException {
+@Test public void conversionProblemIncomingMaskedByConverterIsUnwrapped() throws IOException {
     // MWS has no way to trigger IOExceptions during the response body so use an interceptor.
     OkHttpClient client = new OkHttpClient.Builder() //
         .addInterceptor(chain -> {
@@ -320,7 +312,7 @@ public final class CallTest {
     }
   }
 
-  @Test public void conversionProblemIncomingAsync() throws InterruptedException {
+@Test public void conversionProblemIncomingAsync() throws InterruptedException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory() {
@@ -355,7 +347,7 @@ public final class CallTest {
         .hasMessage("I am broken!");
   }
 
-  @Test public void http204SkipsConverter() throws IOException {
+@Test public void http204SkipsConverter() throws IOException {
     final Converter<ResponseBody, String> converter = value -> {
       throw new AssertionError();
     };
@@ -378,7 +370,7 @@ public final class CallTest {
     assertThat(response.body()).isNull();
   }
 
-  @Test public void http205SkipsConverter() throws IOException {
+@Test public void http205SkipsConverter() throws IOException {
     final Converter<ResponseBody, String> converter = value -> {
       throw new AssertionError();
     };
@@ -401,7 +393,7 @@ public final class CallTest {
     assertThat(response.body()).isNull();
   }
 
-  @Test public void converterBodyDoesNotLeakContentInIntermediateBuffers() throws IOException {
+@Test public void converterBodyDoesNotLeakContentInIntermediateBuffers() throws IOException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new Converter.Factory() {
@@ -424,7 +416,7 @@ public final class CallTest {
     assertThat(response.body()).isEqualTo("aabb");
   }
 
-  @Test public void executeCallOnce() throws IOException {
+@Test public void executeCallOnce() throws IOException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -441,7 +433,7 @@ public final class CallTest {
     }
   }
 
-  @Test public void successfulRequestResponseWhenMimeTypeMissing() throws Exception {
+@Test public void successfulRequestResponseWhenMimeTypeMissing() throws Exception {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -454,7 +446,7 @@ public final class CallTest {
     assertThat(response.body()).isEqualTo("Hi");
   }
 
-  @Test public void responseBody() throws IOException {
+@Test public void responseBody() throws IOException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -467,7 +459,7 @@ public final class CallTest {
     assertThat(response.body().string()).isEqualTo("1234");
   }
 
-  @Test public void responseBodyBuffers() throws IOException {
+@Test public void responseBodyBuffers() throws IOException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -488,7 +480,7 @@ public final class CallTest {
     }
   }
 
-  @Test public void responseBodyStreams() throws IOException {
+@Test public void responseBodyStreams() throws IOException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -511,7 +503,7 @@ public final class CallTest {
     }
   }
 
-  @Test public void rawResponseContentTypeAndLengthButNoSource() throws IOException {
+@Test public void rawResponseContentTypeAndLengthButNoSource() throws IOException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -533,7 +525,7 @@ public final class CallTest {
     }
   }
 
-  @Test public void emptyResponse() throws IOException {
+@Test public void emptyResponse() throws IOException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -549,7 +541,7 @@ public final class CallTest {
     assertThat(rawBody.contentType().toString()).isEqualTo("text/stringy");
   }
 
-  @Test public void reportsExecutedSync() throws IOException {
+@Test public void reportsExecutedSync() throws IOException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -565,7 +557,7 @@ public final class CallTest {
     assertThat(call.isExecuted()).isTrue();
   }
 
-  @Test public void reportsExecutedAsync() throws InterruptedException {
+@Test public void reportsExecutedAsync() throws InterruptedException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -584,7 +576,7 @@ public final class CallTest {
     assertThat(call.isExecuted()).isTrue();
   }
 
-  @Test public void cancelBeforeExecute() {
+@Test public void cancelBeforeExecute() {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -603,7 +595,7 @@ public final class CallTest {
     }
   }
 
-  @Test public void cancelBeforeEnqueue() throws Exception {
+@Test public void cancelBeforeEnqueue() throws Exception {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -630,7 +622,7 @@ public final class CallTest {
     assertThat(failureRef.get()).hasMessage("Canceled");
   }
 
-  @Test public void cloningExecutedRequestDoesNotCopyState() throws IOException {
+@Test public void cloningExecutedRequestDoesNotCopyState() throws IOException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -647,7 +639,7 @@ public final class CallTest {
     assertThat(cloned.execute().body()).isEqualTo("Hello");
   }
 
-  @Test public void cancelRequest() throws InterruptedException {
+@Test public void cancelRequest() throws InterruptedException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -678,7 +670,7 @@ public final class CallTest {
     assertThat(failureRef.get()).isInstanceOf(IOException.class).hasMessage("Canceled");
   }
 
-  @Test public void cancelOkHttpRequest() throws InterruptedException {
+@Test public void cancelOkHttpRequest() throws InterruptedException {
     OkHttpClient client = new OkHttpClient();
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
@@ -712,7 +704,7 @@ public final class CallTest {
     assertThat(failureRef.get()).isInstanceOf(IOException.class).hasMessage("Canceled");
   }
 
-  @Test public void requestBeforeExecuteCreates() throws IOException {
+@Test public void requestBeforeExecuteCreates() throws IOException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -737,7 +729,7 @@ public final class CallTest {
     assertThat(writeCount.get()).isEqualTo(1);
   }
 
-  @Test public void requestThrowingBeforeExecuteFailsExecute() throws IOException {
+@Test public void requestThrowingBeforeExecuteFailsExecute() throws IOException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -772,7 +764,7 @@ public final class CallTest {
     assertThat(writeCount.get()).isEqualTo(1);
   }
 
-  @Test public void requestThrowingNonFatalErrorBeforeExecuteFailsExecute() throws IOException {
+@Test public void requestThrowingNonFatalErrorBeforeExecuteFailsExecute() throws IOException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -807,7 +799,7 @@ public final class CallTest {
     assertThat(writeCount.get()).isEqualTo(1);
   }
 
-  @Test public void requestAfterExecuteReturnsCachedValue() throws IOException {
+@Test public void requestAfterExecuteReturnsCachedValue() throws IOException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -832,7 +824,7 @@ public final class CallTest {
     assertThat(writeCount.get()).isEqualTo(1);
   }
 
-  @Test public void requestAfterExecuteThrowingAlsoThrows() throws IOException {
+@Test public void requestAfterExecuteThrowingAlsoThrows() throws IOException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -867,7 +859,7 @@ public final class CallTest {
     assertThat(writeCount.get()).isEqualTo(1);
   }
 
-  @Test public void requestAfterExecuteThrowingAlsoThrowsForNonFatalErrors() throws IOException {
+@Test public void requestAfterExecuteThrowingAlsoThrowsForNonFatalErrors() throws IOException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -902,7 +894,7 @@ public final class CallTest {
     assertThat(writeCount.get()).isEqualTo(1);
   }
 
-  @Test public void requestBeforeEnqueueCreates() throws IOException, InterruptedException {
+@Test public void requestBeforeEnqueueCreates() throws IOException, InterruptedException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -936,7 +928,7 @@ public final class CallTest {
     assertTrue(latch.await(10, SECONDS));
   }
 
-  @Test public void requestThrowingBeforeEnqueueFailsEnqueue()
+@Test public void requestThrowingBeforeEnqueueFailsEnqueue()
       throws IOException, InterruptedException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
@@ -977,7 +969,7 @@ public final class CallTest {
     assertTrue(latch.await(10, SECONDS));
   }
 
-  @Test public void requestThrowingNonFatalErrorBeforeEnqueueFailsEnqueue()
+@Test public void requestThrowingNonFatalErrorBeforeEnqueueFailsEnqueue()
       throws IOException, InterruptedException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
@@ -1018,7 +1010,7 @@ public final class CallTest {
     assertTrue(latch.await(10, SECONDS));
   }
 
-  @Test public void requestAfterEnqueueReturnsCachedValue() throws IOException,
+@Test public void requestAfterEnqueueReturnsCachedValue() throws IOException,
       InterruptedException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
@@ -1053,7 +1045,7 @@ public final class CallTest {
     assertThat(writeCount.get()).isEqualTo(1);
   }
 
-  @Test public void requestAfterEnqueueFailingThrows() throws IOException,
+@Test public void requestAfterEnqueueFailingThrows() throws IOException,
       InterruptedException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
@@ -1094,7 +1086,7 @@ public final class CallTest {
     assertThat(writeCount.get()).isEqualTo(1);
   }
 
-  @Test public void requestAfterEnqueueFailingThrowsForNonFatalErrors() throws IOException,
+@Test public void requestAfterEnqueueFailingThrowsForNonFatalErrors() throws IOException,
       InterruptedException {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
@@ -1135,7 +1127,7 @@ public final class CallTest {
     assertThat(writeCount.get()).isEqualTo(1);
   }
 
-  @Test public void fatalErrorsAreNotCaughtRequest() throws Exception {
+@Test public void fatalErrorsAreNotCaughtRequest() throws Exception {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -1170,7 +1162,7 @@ public final class CallTest {
     assertThat(writeCount.get()).isEqualTo(2);
   }
 
-  @Test public void fatalErrorsAreNotCaughtEnqueue() throws Exception {
+@Test public void fatalErrorsAreNotCaughtEnqueue() throws Exception {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -1214,7 +1206,7 @@ public final class CallTest {
     assertThat(writeCount.get()).isEqualTo(2);
   }
 
-  @Test public void fatalErrorsAreNotCaughtExecute() throws Exception {
+@Test public void fatalErrorsAreNotCaughtExecute() throws Exception {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new ToStringConverterFactory())
@@ -1247,5 +1239,13 @@ public final class CallTest {
       assertThat(e).hasMessage("Broken!");
     }
     assertThat(writeCount.get()).isEqualTo(2);
+  }
+
+interface Service {
+    @GET("/") Call<String> getString();
+    @GET("/") Call<ResponseBody> getBody();
+    @GET("/") @Streaming Call<ResponseBody> getStreamingBody();
+    @POST("/") Call<String> postString(@Body String body);
+    @POST("/{a}") Call<String> postRequestBody(@Path("a") Object a);
   }
 }

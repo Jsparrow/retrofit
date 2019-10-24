@@ -28,7 +28,38 @@ import retrofit2.Retrofit;
 import retrofit2.http.GET;
 
 public final class DeserializeErrorBody {
-  interface Service {
+  public static void main(String... args) throws IOException {
+	    // Create a local web server which response with a 404 and JSON body.
+	    MockWebServer server = new MockWebServer();
+	    server.start();
+	    server.enqueue(new MockResponse()
+	        .setResponseCode(404)
+	        .setBody("{\"message\":\"Unable to locate resource\"}"));
+	
+	    // Create our Service instance with a Retrofit pointing at the local web server and Gson.
+	    Retrofit retrofit = new Retrofit.Builder()
+	        .baseUrl(server.url("/"))
+	        .addConverterFactory(GsonConverterFactory.create())
+	        .build();
+	    Service service = retrofit.create(Service.class);
+	
+	    Response<User> response = service.getUser().execute();
+	
+	    // Normally you would check response.isSuccess() here before doing the following, but we know
+	    // this call will always fail. You could also use response.code() to determine whether to
+	    // convert the error body and/or which type to use for conversion.
+	
+	    // Look up a converter for the Error type on the Retrofit instance.
+	    Converter<ResponseBody, Error> errorConverter =
+	        retrofit.responseBodyConverter(Error.class, new Annotation[0]);
+	    // Convert the error body into our Error type.
+	    Error error = errorConverter.convert(response.errorBody());
+	    System.out.println("ERROR: " + error.message);
+	
+	    server.shutdown();
+	  }
+
+interface Service {
     @GET("/user") Call<User> getUser();
   }
 
@@ -38,36 +69,5 @@ public final class DeserializeErrorBody {
 
   static class Error {
     String message;
-  }
-
-  public static void main(String... args) throws IOException {
-    // Create a local web server which response with a 404 and JSON body.
-    MockWebServer server = new MockWebServer();
-    server.start();
-    server.enqueue(new MockResponse()
-        .setResponseCode(404)
-        .setBody("{\"message\":\"Unable to locate resource\"}"));
-
-    // Create our Service instance with a Retrofit pointing at the local web server and Gson.
-    Retrofit retrofit = new Retrofit.Builder()
-        .baseUrl(server.url("/"))
-        .addConverterFactory(GsonConverterFactory.create())
-        .build();
-    Service service = retrofit.create(Service.class);
-
-    Response<User> response = service.getUser().execute();
-
-    // Normally you would check response.isSuccess() here before doing the following, but we know
-    // this call will always fail. You could also use response.code() to determine whether to
-    // convert the error body and/or which type to use for conversion.
-
-    // Look up a converter for the Error type on the Retrofit instance.
-    Converter<ResponseBody, Error> errorConverter =
-        retrofit.responseBodyConverter(Error.class, new Annotation[0]);
-    // Convert the error body into our Error type.
-    Error error = errorConverter.convert(response.errorBody());
-    System.out.println("ERROR: " + error.message);
-
-    server.shutdown();
   }
 }

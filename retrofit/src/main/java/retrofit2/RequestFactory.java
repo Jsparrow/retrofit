@@ -63,66 +63,65 @@ import static retrofit2.Utils.methodError;
 import static retrofit2.Utils.parameterError;
 
 final class RequestFactory {
-  static RequestFactory parseAnnotations(Retrofit retrofit, Method method) {
-    return new Builder(retrofit, method).build();
-  }
-
   private final Method method;
-  private final HttpUrl baseUrl;
-  final String httpMethod;
-  private final @Nullable String relativeUrl;
-  private final @Nullable Headers headers;
-  private final @Nullable MediaType contentType;
-  private final boolean hasBody;
-  private final boolean isFormEncoded;
-  private final boolean isMultipart;
-  private final ParameterHandler<?>[] parameterHandlers;
-  final boolean isKotlinSuspendFunction;
+	private final HttpUrl baseUrl;
+	final String httpMethod;
+	private final @Nullable String relativeUrl;
+	private final @Nullable Headers headers;
+	private final @Nullable MediaType contentType;
+	private final boolean hasBody;
+	private final boolean isFormEncoded;
+	private final boolean isMultipart;
+	private final ParameterHandler<?>[] parameterHandlers;
+	final boolean isKotlinSuspendFunction;
 
-  RequestFactory(Builder builder) {
-    method = builder.method;
-    baseUrl = builder.retrofit.baseUrl;
-    httpMethod = builder.httpMethod;
-    relativeUrl = builder.relativeUrl;
-    headers = builder.headers;
-    contentType = builder.contentType;
-    hasBody = builder.hasBody;
-    isFormEncoded = builder.isFormEncoded;
-    isMultipart = builder.isMultipart;
-    parameterHandlers = builder.parameterHandlers;
-    isKotlinSuspendFunction = builder.isKotlinSuspendFunction;
-  }
+	RequestFactory(Builder builder) {
+	    method = builder.method;
+	    baseUrl = builder.retrofit.baseUrl;
+	    httpMethod = builder.httpMethod;
+	    relativeUrl = builder.relativeUrl;
+	    headers = builder.headers;
+	    contentType = builder.contentType;
+	    hasBody = builder.hasBody;
+	    isFormEncoded = builder.isFormEncoded;
+	    isMultipart = builder.isMultipart;
+	    parameterHandlers = builder.parameterHandlers;
+	    isKotlinSuspendFunction = builder.isKotlinSuspendFunction;
+	  }
 
-  okhttp3.Request create(Object[] args) throws IOException {
-    @SuppressWarnings("unchecked") // It is an error to invoke a method with the wrong arg types.
-    ParameterHandler<Object>[] handlers = (ParameterHandler<Object>[]) parameterHandlers;
+	static RequestFactory parseAnnotations(Retrofit retrofit, Method method) {
+	    return new Builder(retrofit, method).build();
+	  }
 
-    int argumentCount = args.length;
-    if (argumentCount != handlers.length) {
-      throw new IllegalArgumentException("Argument count (" + argumentCount
-          + ") doesn't match expected count (" + handlers.length + ")");
-    }
+	okhttp3.Request create(Object[] args) throws IOException {
+	    @SuppressWarnings("unchecked") // It is an error to invoke a method with the wrong arg types.
+	    ParameterHandler<Object>[] handlers = (ParameterHandler<Object>[]) parameterHandlers;
+	
+	    int argumentCount = args.length;
+	    if (argumentCount != handlers.length) {
+	      throw new IllegalArgumentException(new StringBuilder().append("Argument count (").append(argumentCount).append(") doesn't match expected count (").append(handlers.length).append(")").toString());
+	    }
+	
+	    RequestBuilder requestBuilder = new RequestBuilder(httpMethod, baseUrl, relativeUrl,
+	        headers, contentType, hasBody, isFormEncoded, isMultipart);
+	
+	    if (isKotlinSuspendFunction) {
+	      // The Continuation is the last parameter and the handlers array contains null at that index.
+	      argumentCount--;
+	    }
+	
+	    List<Object> argumentList = new ArrayList<>(argumentCount);
+	    for (int p = 0; p < argumentCount; p++) {
+	      argumentList.add(args[p]);
+	      handlers[p].apply(requestBuilder, args[p]);
+	    }
+	
+	    return requestBuilder.get()
+	        .tag(Invocation.class, new Invocation(method, argumentList))
+	        .build();
+	  }
 
-    RequestBuilder requestBuilder = new RequestBuilder(httpMethod, baseUrl, relativeUrl,
-        headers, contentType, hasBody, isFormEncoded, isMultipart);
-
-    if (isKotlinSuspendFunction) {
-      // The Continuation is the last parameter and the handlers array contains null at that index.
-      argumentCount--;
-    }
-
-    List<Object> argumentList = new ArrayList<>(argumentCount);
-    for (int p = 0; p < argumentCount; p++) {
-      argumentList.add(args[p]);
-      handlers[p].apply(requestBuilder, args[p]);
-    }
-
-    return requestBuilder.get()
-        .tag(Invocation.class, new Invocation(method, argumentList))
-        .build();
-  }
-
-  /**
+/**
    * Inspects the annotations on an interface method to construct a reusable service method. This
    * requires potentially-expensive reflection so it is best to build each service method only once
    * and reuse it. Builders cannot be reused.
@@ -130,7 +129,7 @@ final class RequestFactory {
   static final class Builder {
     // Upper and lower characters, digits, underscores, and hyphens, starting with a character.
     private static final String PARAM = "[a-zA-Z][a-zA-Z0-9_-]*";
-    private static final Pattern PARAM_URL_REGEX = Pattern.compile("\\{(" + PARAM + ")\\}");
+    private static final Pattern PARAM_URL_REGEX = Pattern.compile(new StringBuilder().append("\\{(").append(PARAM).append(")\\}").toString());
     private static final Pattern PARAM_NAME_REGEX = Pattern.compile(PARAM);
 
     final Retrofit retrofit;
@@ -407,10 +406,7 @@ final class RequestFactory {
         gotQuery = true;
         if (Iterable.class.isAssignableFrom(rawParameterType)) {
           if (!(type instanceof ParameterizedType)) {
-            throw parameterError(method, p, rawParameterType.getSimpleName()
-                + " must include generic type (e.g., "
-                + rawParameterType.getSimpleName()
-                + "<String>)");
+            throw parameterError(method, p, new StringBuilder().append(rawParameterType.getSimpleName()).append(" must include generic type (e.g., ").append(rawParameterType.getSimpleName()).append("<String>)").toString());
           }
           ParameterizedType parameterizedType = (ParameterizedType) type;
           Type iterableType = Utils.getParameterUpperBound(0, parameterizedType);
@@ -437,10 +433,7 @@ final class RequestFactory {
         gotQueryName = true;
         if (Iterable.class.isAssignableFrom(rawParameterType)) {
           if (!(type instanceof ParameterizedType)) {
-            throw parameterError(method, p, rawParameterType.getSimpleName()
-                + " must include generic type (e.g., "
-                + rawParameterType.getSimpleName()
-                + "<String>)");
+            throw parameterError(method, p, new StringBuilder().append(rawParameterType.getSimpleName()).append(" must include generic type (e.g., ").append(rawParameterType.getSimpleName()).append("<String>)").toString());
           }
           ParameterizedType parameterizedType = (ParameterizedType) type;
           Type iterableType = Utils.getParameterUpperBound(0, parameterizedType);
@@ -490,10 +483,7 @@ final class RequestFactory {
         Class<?> rawParameterType = Utils.getRawType(type);
         if (Iterable.class.isAssignableFrom(rawParameterType)) {
           if (!(type instanceof ParameterizedType)) {
-            throw parameterError(method, p, rawParameterType.getSimpleName()
-                + " must include generic type (e.g., "
-                + rawParameterType.getSimpleName()
-                + "<String>)");
+            throw parameterError(method, p, new StringBuilder().append(rawParameterType.getSimpleName()).append(" must include generic type (e.g., ").append(rawParameterType.getSimpleName()).append("<String>)").toString());
           }
           ParameterizedType parameterizedType = (ParameterizedType) type;
           Type iterableType = Utils.getParameterUpperBound(0, parameterizedType);
@@ -551,10 +541,7 @@ final class RequestFactory {
         Class<?> rawParameterType = Utils.getRawType(type);
         if (Iterable.class.isAssignableFrom(rawParameterType)) {
           if (!(type instanceof ParameterizedType)) {
-            throw parameterError(method, p, rawParameterType.getSimpleName()
-                + " must include generic type (e.g., "
-                + rawParameterType.getSimpleName()
-                + "<String>)");
+            throw parameterError(method, p, new StringBuilder().append(rawParameterType.getSimpleName()).append(" must include generic type (e.g., ").append(rawParameterType.getSimpleName()).append("<String>)").toString());
           }
           ParameterizedType parameterizedType = (ParameterizedType) type;
           Type iterableType = Utils.getParameterUpperBound(0, parameterizedType);
@@ -614,10 +601,7 @@ final class RequestFactory {
         if (partName.isEmpty()) {
           if (Iterable.class.isAssignableFrom(rawParameterType)) {
             if (!(type instanceof ParameterizedType)) {
-              throw parameterError(method, p, rawParameterType.getSimpleName()
-                  + " must include generic type (e.g., "
-                  + rawParameterType.getSimpleName()
-                  + "<String>)");
+              throw parameterError(method, p, new StringBuilder().append(rawParameterType.getSimpleName()).append(" must include generic type (e.g., ").append(rawParameterType.getSimpleName()).append("<String>)").toString());
             }
             ParameterizedType parameterizedType = (ParameterizedType) type;
             Type iterableType = Utils.getParameterUpperBound(0, parameterizedType);
@@ -641,15 +625,12 @@ final class RequestFactory {
           }
         } else {
           Headers headers =
-              Headers.of("Content-Disposition", "form-data; name=\"" + partName + "\"",
+              Headers.of("Content-Disposition", new StringBuilder().append("form-data; name=\"").append(partName).append("\"").toString(),
                   "Content-Transfer-Encoding", part.encoding());
 
           if (Iterable.class.isAssignableFrom(rawParameterType)) {
             if (!(type instanceof ParameterizedType)) {
-              throw parameterError(method, p, rawParameterType.getSimpleName()
-                  + " must include generic type (e.g., "
-                  + rawParameterType.getSimpleName()
-                  + "<String>)");
+              throw parameterError(method, p, new StringBuilder().append(rawParameterType.getSimpleName()).append(" must include generic type (e.g., ").append(rawParameterType.getSimpleName()).append("<String>)").toString());
             }
             ParameterizedType parameterizedType = (ParameterizedType) type;
             Type iterableType = Utils.getParameterUpperBound(0, parameterizedType);
@@ -745,11 +726,7 @@ final class RequestFactory {
           ParameterHandler<?> otherHandler = parameterHandlers[i];
           if (otherHandler instanceof ParameterHandler.Tag
               && ((ParameterHandler.Tag) otherHandler).cls.equals(tagType)) {
-            throw parameterError(method, p, "@Tag type "
-                + tagType.getName()
-                + " is duplicate of parameter #"
-                + (i + 1)
-                + " and would always overwrite its value.");
+            throw parameterError(method, p, new StringBuilder().append("@Tag type ").append(tagType.getName()).append(" is duplicate of parameter #").append(i + 1).append(" and would always overwrite its value.").toString());
           }
         }
 
@@ -791,14 +768,30 @@ final class RequestFactory {
     }
 
     private static Class<?> boxIfPrimitive(Class<?> type) {
-      if (boolean.class == type) return Boolean.class;
-      if (byte.class == type) return Byte.class;
-      if (char.class == type) return Character.class;
-      if (double.class == type) return Double.class;
-      if (float.class == type) return Float.class;
-      if (int.class == type) return Integer.class;
-      if (long.class == type) return Long.class;
-      if (short.class == type) return Short.class;
+      if (boolean.class == type) {
+		return Boolean.class;
+	}
+      if (byte.class == type) {
+		return Byte.class;
+	}
+      if (char.class == type) {
+		return Character.class;
+	}
+      if (double.class == type) {
+		return Double.class;
+	}
+      if (float.class == type) {
+		return Float.class;
+	}
+      if (int.class == type) {
+		return Integer.class;
+	}
+      if (long.class == type) {
+		return Long.class;
+	}
+      if (short.class == type) {
+		return Short.class;
+	}
       return type;
     }
   }

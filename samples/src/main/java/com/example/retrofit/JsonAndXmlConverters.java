@@ -44,15 +44,38 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * converter.
  */
 public final class JsonAndXmlConverters {
-  @Retention(RUNTIME)
-  @interface Json {
-  }
+  public static void main(String... args) throws IOException {
+	    MockWebServer server = new MockWebServer();
+	    server.start();
+	    server.enqueue(new MockResponse().setBody("{\"name\": \"Jason\"}"));
+	    server.enqueue(new MockResponse().setBody("<user name=\"Eximel\"/>"));
+	
+	    Retrofit retrofit = new Retrofit.Builder()
+	        .baseUrl(server.url("/"))
+	        .addConverterFactory(new QualifiedTypeConverterFactory(
+	            GsonConverterFactory.create(),
+	            SimpleXmlConverterFactory.create()))
+	        .build();
+	    Service service = retrofit.create(Service.class);
+	
+	    User user1 = service.exampleJson().execute().body();
+	    System.out.println("User 1: " + user1.name);
+	
+	    User user2 = service.exampleXml().execute().body();
+	    System.out.println("User 2: " + user2.name);
+	
+	    server.shutdown();
+	  }
 
-  @Retention(RUNTIME)
-  @interface Xml {
-  }
+	@Retention(RUNTIME)
+	  @interface Json {
+	  }
 
-  static class QualifiedTypeConverterFactory extends Converter.Factory {
+	@Retention(RUNTIME)
+	  @interface Xml {
+	  }
+
+static class QualifiedTypeConverterFactory extends Converter.Factory {
     private final Converter.Factory jsonFactory;
     private final Converter.Factory xmlFactory;
 
@@ -101,28 +124,5 @@ public final class JsonAndXmlConverters {
     Call<User> exampleJson();
     @GET("/") @Xml
     Call<User> exampleXml();
-  }
-
-  public static void main(String... args) throws IOException {
-    MockWebServer server = new MockWebServer();
-    server.start();
-    server.enqueue(new MockResponse().setBody("{\"name\": \"Jason\"}"));
-    server.enqueue(new MockResponse().setBody("<user name=\"Eximel\"/>"));
-
-    Retrofit retrofit = new Retrofit.Builder()
-        .baseUrl(server.url("/"))
-        .addConverterFactory(new QualifiedTypeConverterFactory(
-            GsonConverterFactory.create(),
-            SimpleXmlConverterFactory.create()))
-        .build();
-    Service service = retrofit.create(Service.class);
-
-    User user1 = service.exampleJson().execute().body();
-    System.out.println("User 1: " + user1.name);
-
-    User user2 = service.exampleXml().execute().body();
-    System.out.println("User 2: " + user2.name);
-
-    server.shutdown();
   }
 }

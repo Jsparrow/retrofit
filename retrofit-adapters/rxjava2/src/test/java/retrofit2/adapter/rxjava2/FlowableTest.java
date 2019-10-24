@@ -32,16 +32,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 public final class FlowableTest {
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final RecordingSubscriber.Rule subscriberRule = new RecordingSubscriber.Rule();
+private Service service;
 
-  interface Service {
-    @GET("/") Flowable<String> body();
-    @GET("/") Flowable<Response<String>> response();
-    @GET("/") Flowable<Result<String>> result();
-  }
-
-  private Service service;
-
-  @Before public void setUp() {
+@Before public void setUp() {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new StringConverterFactory())
@@ -50,7 +43,7 @@ public final class FlowableTest {
     service = retrofit.create(Service.class);
   }
 
-  @Test public void bodySuccess200() {
+@Test public void bodySuccess200() {
     server.enqueue(new MockResponse().setBody("Hi"));
 
     RecordingSubscriber<String> subscriber = subscriberRule.create();
@@ -58,7 +51,7 @@ public final class FlowableTest {
     subscriber.assertValue("Hi").assertComplete();
   }
 
-  @Test public void bodySuccess404() {
+@Test public void bodySuccess404() {
     server.enqueue(new MockResponse().setResponseCode(404));
 
     RecordingSubscriber<String> subscriber = subscriberRule.create();
@@ -67,7 +60,7 @@ public final class FlowableTest {
     subscriber.assertError(HttpException.class, "HTTP 404 Client Error");
   }
 
-  @Test public void bodyFailure() {
+@Test public void bodyFailure() {
     server.enqueue(new MockResponse().setSocketPolicy(DISCONNECT_AFTER_REQUEST));
 
     RecordingSubscriber<String> subscriber = subscriberRule.create();
@@ -75,7 +68,7 @@ public final class FlowableTest {
     subscriber.assertError(IOException.class);
   }
 
-  @Test public void bodyRespectsBackpressure() {
+@Test public void bodyRespectsBackpressure() {
     server.enqueue(new MockResponse().setBody("Hi"));
 
     RecordingSubscriber<String> subscriber = subscriberRule.createWithInitialRequest(0);
@@ -92,7 +85,7 @@ public final class FlowableTest {
     assertThat(server.getRequestCount()).isEqualTo(1);
   }
 
-  @Test public void responseSuccess200() {
+@Test public void responseSuccess200() {
     server.enqueue(new MockResponse());
 
     RecordingSubscriber<Response<String>> subscriber = subscriberRule.create();
@@ -101,7 +94,7 @@ public final class FlowableTest {
     subscriber.assertComplete();
   }
 
-  @Test public void responseSuccess404() {
+@Test public void responseSuccess404() {
     server.enqueue(new MockResponse().setResponseCode(404));
 
     RecordingSubscriber<Response<String>> subscriber = subscriberRule.create();
@@ -110,7 +103,7 @@ public final class FlowableTest {
     subscriber.assertComplete();
   }
 
-  @Test public void responseFailure() {
+@Test public void responseFailure() {
     server.enqueue(new MockResponse().setSocketPolicy(DISCONNECT_AFTER_REQUEST));
 
     RecordingSubscriber<Response<String>> subscriber = subscriberRule.create();
@@ -118,7 +111,7 @@ public final class FlowableTest {
     subscriber.assertError(IOException.class);
   }
 
-  @Test public void responseRespectsBackpressure() {
+@Test public void responseRespectsBackpressure() {
     server.enqueue(new MockResponse().setBody("Hi"));
 
     RecordingSubscriber<Response<String>> subscriber = subscriberRule.createWithInitialRequest(0);
@@ -135,7 +128,7 @@ public final class FlowableTest {
     assertThat(server.getRequestCount()).isEqualTo(1);
   }
 
-  @Test public void resultSuccess200() {
+@Test public void resultSuccess200() {
     server.enqueue(new MockResponse());
 
     RecordingSubscriber<Result<String>> subscriber = subscriberRule.create();
@@ -146,7 +139,7 @@ public final class FlowableTest {
     subscriber.assertComplete();
   }
 
-  @Test public void resultSuccess404() {
+@Test public void resultSuccess404() {
     server.enqueue(new MockResponse().setResponseCode(404));
 
     RecordingSubscriber<Result<String>> subscriber = subscriberRule.create();
@@ -157,7 +150,7 @@ public final class FlowableTest {
     subscriber.assertComplete();
   }
 
-  @Test public void resultFailure() {
+@Test public void resultFailure() {
     server.enqueue(new MockResponse().setSocketPolicy(DISCONNECT_AFTER_REQUEST));
 
     RecordingSubscriber<Result<String>> subscriber = subscriberRule.create();
@@ -168,7 +161,7 @@ public final class FlowableTest {
     subscriber.assertComplete();
   }
 
-  @Test public void resultRespectsBackpressure() {
+@Test public void resultRespectsBackpressure() {
     server.enqueue(new MockResponse().setBody("Hi"));
 
     RecordingSubscriber<Result<String>> subscriber = subscriberRule.createWithInitialRequest(0);
@@ -185,7 +178,7 @@ public final class FlowableTest {
     assertThat(server.getRequestCount()).isEqualTo(1);
   }
 
-  @Test public void subscribeTwice() {
+@Test public void subscribeTwice() {
     server.enqueue(new MockResponse().setBody("Hi"));
     server.enqueue(new MockResponse().setBody("Hey"));
 
@@ -198,5 +191,11 @@ public final class FlowableTest {
     RecordingSubscriber<Object> subscriber2 = subscriberRule.create();
     observable.subscribe(subscriber2);
     subscriber2.assertValue("Hey").assertComplete();
+  }
+
+  interface Service {
+    @GET("/") Flowable<String> body();
+    @GET("/") Flowable<Response<String>> response();
+    @GET("/") Flowable<Result<String>> result();
   }
 }

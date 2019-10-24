@@ -31,7 +31,28 @@ import retrofit2.http.Url;
  * This example prints HTTP call metrics with the initiating method names and arguments.
  */
 public final class InvocationMetrics {
-  public interface Browse {
+  public static void main(String... args) throws IOException {
+	    InvocationLogger invocationLogger = new InvocationLogger();
+	
+	    OkHttpClient okHttpClient = new OkHttpClient.Builder()
+	        .addInterceptor(invocationLogger)
+	        .build();
+	
+	    Retrofit retrofit = new Retrofit.Builder()
+	        .baseUrl("https://square.com/")
+	        .callFactory(okHttpClient)
+	        .build();
+	
+	    Browse browse = retrofit.create(Browse.class);
+	
+	    browse.robots().execute();
+	    browse.favicon().execute();
+	    browse.home().execute();
+	    browse.page("sitemap.xml").execute();
+	    browse.page("notfound").execute();
+	  }
+
+public interface Browse {
     @GET("/robots.txt")
     Call<ResponseBody> robots();
 
@@ -64,26 +85,5 @@ public final class InvocationMetrics {
 
       return response;
     }
-  }
-
-  public static void main(String... args) throws IOException {
-    InvocationLogger invocationLogger = new InvocationLogger();
-
-    OkHttpClient okHttpClient = new OkHttpClient.Builder()
-        .addInterceptor(invocationLogger)
-        .build();
-
-    Retrofit retrofit = new Retrofit.Builder()
-        .baseUrl("https://square.com/")
-        .callFactory(okHttpClient)
-        .build();
-
-    Browse browse = retrofit.create(Browse.class);
-
-    browse.robots().execute();
-    browse.favicon().execute();
-    browse.home().execute();
-    browse.page("sitemap.xml").execute();
-    browse.page("notfound").execute();
   }
 }

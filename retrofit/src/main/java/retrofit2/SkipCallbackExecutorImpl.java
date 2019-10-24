@@ -46,6 +46,6 @@ final class SkipCallbackExecutorImpl implements SkipCallbackExecutor {
   }
 
   @Override public String toString() {
-    return "@" + SkipCallbackExecutor.class.getName() + "()";
+    return new StringBuilder().append("@").append(SkipCallbackExecutor.class.getName()).append("()").toString();
   }
 }

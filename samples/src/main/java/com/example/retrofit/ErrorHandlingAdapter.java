@@ -34,7 +34,43 @@ import retrofit2.http.GET;
  * version whose callback has more granular methods.
  */
 public final class ErrorHandlingAdapter {
-  /** A callback which offers granular callbacks for various conditions. */
+  public static void main(String... args) {
+	    Retrofit retrofit = new Retrofit.Builder()
+	        .baseUrl("http://httpbin.org")
+	        .addCallAdapterFactory(new ErrorHandlingCallAdapterFactory())
+	        .addConverterFactory(GsonConverterFactory.create())
+	        .build();
+	
+	    HttpBinService service = retrofit.create(HttpBinService.class);
+	    MyCall<Ip> ip = service.getIp();
+	    ip.enqueue(new MyCallback<Ip>() {
+	      @Override public void success(Response<Ip> response) {
+	        System.out.println("SUCCESS! " + response.body().origin);
+	      }
+	
+	      @Override public void unauthenticated(Response<?> response) {
+	        System.out.println("UNAUTHENTICATED");
+	      }
+	
+	      @Override public void clientError(Response<?> response) {
+	        System.out.println(new StringBuilder().append("CLIENT ERROR ").append(response.code()).append(" ").append(response.message()).toString());
+	      }
+	
+	      @Override public void serverError(Response<?> response) {
+	        System.out.println(new StringBuilder().append("SERVER ERROR ").append(response.code()).append(" ").append(response.message()).toString());
+	      }
+	
+	      @Override public void networkError(IOException e) {
+	        System.err.println("NETWORK ERROR " + e.getMessage());
+	      }
+	
+	      @Override public void unexpectedError(Throwable t) {
+	        System.err.println("FATAL ERROR " + t.getMessage());
+	      }
+	    });
+	  }
+
+/** A callback which offers granular callbacks for various conditions. */
   interface MyCallback<T> {
     /** Called for [200, 300) responses. */
     void success(Response<T> response);
@@ -152,41 +188,5 @@ public final class ErrorHandlingAdapter {
 
   static class Ip {
     String origin;
-  }
-
-  public static void main(String... args) {
-    Retrofit retrofit = new Retrofit.Builder()
-        .baseUrl("http://httpbin.org")
-        .addCallAdapterFactory(new ErrorHandlingCallAdapterFactory())
-        .addConverterFactory(GsonConverterFactory.create())
-        .build();
-
-    HttpBinService service = retrofit.create(HttpBinService.class);
-    MyCall<Ip> ip = service.getIp();
-    ip.enqueue(new MyCallback<Ip>() {
-      @Override public void success(Response<Ip> response) {
-        System.out.println("SUCCESS! " + response.body().origin);
-      }
-
-      @Override public void unauthenticated(Response<?> response) {
-        System.out.println("UNAUTHENTICATED");
-      }
-
-      @Override public void clientError(Response<?> response) {
-        System.out.println("CLIENT ERROR " + response.code() + " " + response.message());
-      }
-
-      @Override public void serverError(Response<?> response) {
-        System.out.println("SERVER ERROR " + response.code() + " " + response.message());
-      }
-
-      @Override public void networkError(IOException e) {
-        System.err.println("NETWORK ERROR " + e.getMessage());
-      }
-
-      @Override public void unexpectedError(Throwable t) {
-        System.err.println("FATAL ERROR " + t.getMessage());
-      }
-    });
   }
 }

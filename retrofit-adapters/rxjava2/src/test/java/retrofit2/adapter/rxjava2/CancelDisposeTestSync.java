@@ -28,15 +28,10 @@ import static org.junit.Assert.assertEquals;
 
 public final class CancelDisposeTestSync {
   @Rule public final MockWebServer server = new MockWebServer();
+private final OkHttpClient client = new OkHttpClient();
+private Service service;
 
-  interface Service {
-    @GET("/") Observable<String> go();
-  }
-
-  private final OkHttpClient client = new OkHttpClient();
-  private Service service;
-
-  @Before public void setUp() {
+@Before public void setUp() {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new StringConverterFactory())
@@ -46,9 +41,13 @@ public final class CancelDisposeTestSync {
     service = retrofit.create(Service.class);
   }
 
-  @SuppressWarnings("ResultOfMethodCallIgnored")
+@SuppressWarnings("ResultOfMethodCallIgnored")
   @Test public void disposeBeforeExecuteDoesNotEnqueue() {
     service.go().test(true);
     assertEquals(0, server.getRequestCount());
+  }
+
+  interface Service {
+    @GET("/") Observable<String> go();
   }
 }

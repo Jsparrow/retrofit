@@ -39,16 +39,9 @@ public final class FlowableThrowingTest {
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final TestRule resetRule = new RxJavaPluginsResetRule();
   @Rule public final RecordingSubscriber.Rule subscriberRule = new RecordingSubscriber.Rule();
+private Service service;
 
-  interface Service {
-    @GET("/") Flowable<String> body();
-    @GET("/") Flowable<Response<String>> response();
-    @GET("/") Flowable<Result<String>> result();
-  }
-
-  private Service service;
-
-  @Before public void setUp() {
+@Before public void setUp() {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addConverterFactory(new StringConverterFactory())
@@ -57,7 +50,7 @@ public final class FlowableThrowingTest {
     service = retrofit.create(Service.class);
   }
 
-  @Test public void bodyThrowingInOnNextDeliveredToError() {
+@Test public void bodyThrowingInOnNextDeliveredToError() {
     server.enqueue(new MockResponse());
 
     RecordingSubscriber<String> subscriber = subscriberRule.create();
@@ -71,7 +64,7 @@ public final class FlowableThrowingTest {
     subscriber.assertError(e);
   }
 
-  @Test public void bodyThrowingInOnCompleteDeliveredToPlugin() {
+@Test public void bodyThrowingInOnCompleteDeliveredToPlugin() {
     server.enqueue(new MockResponse());
 
     final AtomicReference<Throwable> throwableRef = new AtomicReference<>();
@@ -94,7 +87,7 @@ public final class FlowableThrowingTest {
 
   }
 
-  @Test public void bodyThrowingInOnErrorDeliveredToPlugin() {
+@Test public void bodyThrowingInOnErrorDeliveredToPlugin() {
     server.enqueue(new MockResponse().setResponseCode(404));
 
     final AtomicReference<Throwable> throwableRef = new AtomicReference<>();
@@ -121,7 +114,7 @@ public final class FlowableThrowingTest {
     assertThat(composite.getExceptions()).containsExactly(errorRef.get(), e);
   }
 
-  @Test public void responseThrowingInOnNextDeliveredToError() {
+@Test public void responseThrowingInOnNextDeliveredToError() {
     server.enqueue(new MockResponse());
 
     RecordingSubscriber<Response<String>> subscriber = subscriberRule.create();
@@ -135,7 +128,7 @@ public final class FlowableThrowingTest {
     subscriber.assertError(e);
   }
 
-  @Test public void responseThrowingInOnCompleteDeliveredToPlugin() {
+@Test public void responseThrowingInOnCompleteDeliveredToPlugin() {
     server.enqueue(new MockResponse());
 
     final AtomicReference<Throwable> throwableRef = new AtomicReference<>();
@@ -157,7 +150,7 @@ public final class FlowableThrowingTest {
     assertThat(throwableRef.get()).isSameAs(e);
   }
 
-  @Test public void responseThrowingInOnErrorDeliveredToPlugin() {
+@Test public void responseThrowingInOnErrorDeliveredToPlugin() {
     server.enqueue(new MockResponse().setSocketPolicy(DISCONNECT_AFTER_REQUEST));
 
     final AtomicReference<Throwable> throwableRef = new AtomicReference<>();
@@ -184,7 +177,7 @@ public final class FlowableThrowingTest {
     assertThat(composite.getExceptions()).containsExactly(errorRef.get(), e);
   }
 
-  @Test public void resultThrowingInOnNextDeliveredToError() {
+@Test public void resultThrowingInOnNextDeliveredToError() {
     server.enqueue(new MockResponse());
 
     RecordingSubscriber<Result<String>> subscriber = subscriberRule.create();
@@ -198,7 +191,7 @@ public final class FlowableThrowingTest {
     subscriber.assertError(e);
   }
 
-  @Test public void resultThrowingInOnCompletedDeliveredToPlugin() {
+@Test public void resultThrowingInOnCompletedDeliveredToPlugin() {
     server.enqueue(new MockResponse());
 
     final AtomicReference<Throwable> throwableRef = new AtomicReference<>();
@@ -220,7 +213,7 @@ public final class FlowableThrowingTest {
     assertThat(throwableRef.get()).isSameAs(e);
   }
 
-  @Test public void resultThrowingInOnErrorDeliveredToPlugin() {
+@Test public void resultThrowingInOnErrorDeliveredToPlugin() {
     server.enqueue(new MockResponse());
 
     final AtomicReference<Throwable> throwableRef = new AtomicReference<>();
@@ -249,7 +242,13 @@ public final class FlowableThrowingTest {
     assertThat(composite.getExceptions()).containsExactly(first, second);
   }
 
-  private static abstract class ForwardingSubscriber<T> implements Subscriber<T> {
+  interface Service {
+    @GET("/") Flowable<String> body();
+    @GET("/") Flowable<Response<String>> response();
+    @GET("/") Flowable<Result<String>> result();
+  }
+
+  private abstract static class ForwardingSubscriber<T> implements Subscriber<T> {
     private final Subscriber<T> delegate;
 
     ForwardingSubscriber(Subscriber<T> delegate) {

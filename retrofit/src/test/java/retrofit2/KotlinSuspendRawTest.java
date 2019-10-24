@@ -31,11 +31,6 @@ import static org.junit.Assert.fail;
 public final class KotlinSuspendRawTest {
   @Rule public final MockWebServer server = new MockWebServer();
 
-  interface Service {
-    @GET("/")
-    Object body(Continuation<? super Response> response);
-  }
-
   @Test public void raw() {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
@@ -49,5 +44,10 @@ public final class KotlinSuspendRawTest {
       assertThat(e).hasMessage("Response must include generic type (e.g., Response<String>)\n"
           + "    for method Service.body");
     }
+  }
+
+interface Service {
+    @GET("/")
+    Object body(Continuation<? super Response> response);
   }
 }

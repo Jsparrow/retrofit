@@ -44,13 +44,8 @@ import static org.junit.Assert.assertTrue;
 public final class AsyncTest {
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final TestRule pluginsReset = new RxJavaPluginsResetRule();
-
-  interface Service {
-    @GET("/") Completable completable();
-  }
-
-  private Service service;
-  @Before public void setUp() {
+private Service service;
+@Before public void setUp() {
     Retrofit retrofit = new Retrofit.Builder()
         .baseUrl(server.url("/"))
         .addCallAdapterFactory(RxJavaCallAdapterFactory.createAsync())
@@ -58,7 +53,7 @@ public final class AsyncTest {
     service = retrofit.create(Service.class);
   }
 
-  @Test public void success() throws InterruptedException {
+@Test public void success() throws InterruptedException {
     TestSubscriber<Void> subscriber = new TestSubscriber<>();
     service.completable().subscribe(subscriber);
     assertFalse(subscriber.awaitValueCount(1, 1, SECONDS));
@@ -68,8 +63,7 @@ public final class AsyncTest {
     subscriber.assertCompleted();
   }
 
-
-  @Test public void failure() throws InterruptedException {
+@Test public void failure() throws InterruptedException {
     TestSubscriber<Void> subscriber = new TestSubscriber<>();
     service.completable().subscribe(subscriber);
     assertFalse(subscriber.awaitValueCount(1, 1, SECONDS));
@@ -79,7 +73,7 @@ public final class AsyncTest {
     subscriber.assertError(IOException.class);
   }
 
-  @Test public void throwingInOnCompleteDeliveredToPlugin() throws InterruptedException {
+@Test public void throwingInOnCompleteDeliveredToPlugin() throws InterruptedException {
     server.enqueue(new MockResponse());
 
     final CountDownLatch latch = new CountDownLatch(1);
@@ -109,7 +103,7 @@ public final class AsyncTest {
     assertThat(errorRef.get()).isSameAs(e);
   }
 
-  @Test public void bodyThrowingInOnErrorDeliveredToPlugin() throws InterruptedException {
+@Test public void bodyThrowingInOnErrorDeliveredToPlugin() throws InterruptedException {
     server.enqueue(new MockResponse().setResponseCode(404));
 
     final CountDownLatch latch = new CountDownLatch(1);
@@ -142,7 +136,7 @@ public final class AsyncTest {
     assertThat(composite.getExceptions()).containsExactly(errorRef.get(), e);
   }
 
-  @Test public void bodyThrowingInOnSafeSubscriberErrorDeliveredToPlugin()
+@Test public void bodyThrowingInOnSafeSubscriberErrorDeliveredToPlugin()
       throws InterruptedException {
     server.enqueue(new MockResponse().setResponseCode(404));
 
@@ -150,12 +144,13 @@ public final class AsyncTest {
     final AtomicReference<Throwable> pluginRef = new AtomicReference<>();
     RxJavaPlugins.getInstance().registerErrorHandler(new RxJavaErrorHandler() {
       @Override public void handleError(Throwable throwable) {
-        if (throwable instanceof OnErrorFailedException) {
-          if (!pluginRef.compareAndSet(null, throwable)) {
+        if (!(throwable instanceof OnErrorFailedException)) {
+			return;
+		}
+		if (!pluginRef.compareAndSet(null, throwable)) {
             throw Exceptions.propagate(throwable); // Don't swallow secondary errors!
           }
-          latch.countDown();
-        }
+		latch.countDown();
       }
     });
 
@@ -177,5 +172,9 @@ public final class AsyncTest {
     OnErrorFailedException failed = (OnErrorFailedException) pluginRef.get();
     CompositeException composite = (CompositeException) failed.getCause();
     assertThat(composite.getExceptions()).containsExactly(errorRef.get(), e);
+  }
+
+  interface Service {
+    @GET("/") Completable completable();
   }
 }

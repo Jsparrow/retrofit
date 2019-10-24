@@ -31,7 +31,10 @@ abstract class ParameterHandler<T> {
     return new ParameterHandler<Iterable<T>>() {
       @Override void apply(RequestBuilder builder, @Nullable Iterable<T> values)
           throws IOException {
-        if (values == null) return; // Skip null values.
+        if (values == null)
+		 {
+			return; // Skip null values.
+		}
 
         for (T value : values) {
           ParameterHandler.this.apply(builder, value);
@@ -43,7 +46,10 @@ abstract class ParameterHandler<T> {
   final ParameterHandler<Object> array() {
     return new ParameterHandler<Object>() {
       @Override void apply(RequestBuilder builder, @Nullable Object values) throws IOException {
-        if (values == null) return; // Skip null values.
+        if (values == null)
+		 {
+			return; // Skip null values.
+		}
 
         for (int i = 0, size = Array.getLength(values); i < size; i++) {
           //noinspection unchecked
@@ -80,10 +86,16 @@ abstract class ParameterHandler<T> {
     }
 
     @Override void apply(RequestBuilder builder, @Nullable T value) throws IOException {
-      if (value == null) return; // Skip null values.
+      if (value == null)
+	 {
+		return; // Skip null values.
+	}
 
       String headerValue = valueConverter.convert(value);
-      if (headerValue == null) return; // Skip converted but null values.
+      if (headerValue == null)
+	 {
+		return; // Skip converted but null values.
+	}
 
       builder.addHeader(name, headerValue);
     }
@@ -108,7 +120,7 @@ abstract class ParameterHandler<T> {
     @Override void apply(RequestBuilder builder, @Nullable T value) throws IOException {
       if (value == null) {
         throw Utils.parameterError(method, p,
-                "Path parameter \"" + name + "\" value must not be null.");
+                new StringBuilder().append("Path parameter \"").append(name).append("\" value must not be null.").toString());
       }
       builder.addPathParam(name, valueConverter.convert(value), encoded);
     }
@@ -126,10 +138,16 @@ abstract class ParameterHandler<T> {
     }
 
     @Override void apply(RequestBuilder builder, @Nullable T value) throws IOException {
-      if (value == null) return; // Skip null values.
+      if (value == null)
+	 {
+		return; // Skip null values.
+	}
 
       String queryValue = valueConverter.convert(value);
-      if (queryValue == null) return; // Skip converted but null values
+      if (queryValue == null)
+	 {
+		return; // Skip converted but null values
+	}
 
       builder.addQueryParam(name, queryValue, encoded);
     }
@@ -145,7 +163,10 @@ abstract class ParameterHandler<T> {
     }
 
     @Override void apply(RequestBuilder builder, @Nullable T value) throws IOException {
-      if (value == null) return; // Skip null values.
+      if (value == null)
+	 {
+		return; // Skip null values.
+	}
       builder.addQueryParam(nameConverter.convert(value), null, encoded);
     }
   }
@@ -177,18 +198,13 @@ abstract class ParameterHandler<T> {
         T entryValue = entry.getValue();
         if (entryValue == null) {
           throw Utils.parameterError(method, p,
-                  "Query map contained null value for key '" + entryKey + "'.");
+                  new StringBuilder().append("Query map contained null value for key '").append(entryKey).append("'.").toString());
         }
 
         String convertedEntryValue = valueConverter.convert(entryValue);
         if (convertedEntryValue == null) {
-          throw Utils.parameterError(method, p, "Query map value '"
-              + entryValue
-              + "' converted to null by "
-              + valueConverter.getClass().getName()
-              + " for key '"
-              + entryKey
-              + "'.");
+          throw Utils.parameterError(method, p, new StringBuilder().append("Query map value '").append(entryValue).append("' converted to null by ").append(valueConverter.getClass().getName()).append(" for key '").append(entryKey)
+				.append("'.").toString());
         }
 
         builder.addQueryParam(entryKey, convertedEntryValue, encoded);
@@ -221,7 +237,7 @@ abstract class ParameterHandler<T> {
         T headerValue = entry.getValue();
         if (headerValue == null) {
           throw Utils.parameterError(method, p,
-                  "Header map contained null value for key '" + headerName + "'.");
+                  new StringBuilder().append("Header map contained null value for key '").append(headerName).append("'.").toString());
         }
         builder.addHeader(headerName, valueConverter.convert(headerValue));
       }
@@ -257,10 +273,16 @@ abstract class ParameterHandler<T> {
     }
 
     @Override void apply(RequestBuilder builder, @Nullable T value) throws IOException {
-      if (value == null) return; // Skip null values.
+      if (value == null)
+	 {
+		return; // Skip null values.
+	}
 
       String fieldValue = valueConverter.convert(value);
-      if (fieldValue == null) return; // Skip null converted values
+      if (fieldValue == null)
+	 {
+		return; // Skip null converted values
+	}
 
       builder.addFormField(name, fieldValue, encoded);
     }
@@ -293,18 +315,13 @@ abstract class ParameterHandler<T> {
         T entryValue = entry.getValue();
         if (entryValue == null) {
           throw Utils.parameterError(method, p,
-                  "Field map contained null value for key '" + entryKey + "'.");
+                  new StringBuilder().append("Field map contained null value for key '").append(entryKey).append("'.").toString());
         }
 
         String fieldEntry = valueConverter.convert(entryValue);
         if (fieldEntry == null) {
-          throw Utils.parameterError(method, p, "Field map value '"
-              + entryValue
-              + "' converted to null by "
-              + valueConverter.getClass().getName()
-              + " for key '"
-              + entryKey
-              + "'.");
+          throw Utils.parameterError(method, p, new StringBuilder().append("Field map value '").append(entryValue).append("' converted to null by ").append(valueConverter.getClass().getName()).append(" for key '").append(entryKey)
+				.append("'.").toString());
         }
 
         builder.addFormField(entryKey, fieldEntry, encoded);
@@ -326,13 +343,16 @@ abstract class ParameterHandler<T> {
     }
 
     @Override void apply(RequestBuilder builder, @Nullable T value) {
-      if (value == null) return; // Skip null values.
+      if (value == null)
+	 {
+		return; // Skip null values.
+	}
 
       RequestBody body;
       try {
         body = converter.convert(value);
       } catch (IOException e) {
-        throw Utils.parameterError(method, p, "Unable to convert " + value + " to RequestBody", e);
+        throw Utils.parameterError(method, p, new StringBuilder().append("Unable to convert ").append(value).append(" to RequestBody").toString(), e);
       }
       builder.addPart(headers, body);
     }
@@ -379,11 +399,11 @@ abstract class ParameterHandler<T> {
         T entryValue = entry.getValue();
         if (entryValue == null) {
           throw Utils.parameterError(method, p,
-                  "Part map contained null value for key '" + entryKey + "'.");
+                  new StringBuilder().append("Part map contained null value for key '").append(entryKey).append("'.").toString());
         }
 
         okhttp3.Headers headers = okhttp3.Headers.of(
-            "Content-Disposition", "form-data; name=\"" + entryKey + "\"",
+            "Content-Disposition", new StringBuilder().append("form-data; name=\"").append(entryKey).append("\"").toString(),
             "Content-Transfer-Encoding", transferEncoding);
 
         builder.addPart(headers, valueConverter.convert(entryValue));
@@ -410,7 +430,7 @@ abstract class ParameterHandler<T> {
       try {
         body = converter.convert(value);
       } catch (IOException e) {
-        throw Utils.parameterError(method, e, p, "Unable to convert " + value + " to RequestBody");
+        throw Utils.parameterError(method, e, p, new StringBuilder().append("Unable to convert ").append(value).append(" to RequestBody").toString());
       }
       builder.setBody(body);
     }

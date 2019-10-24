@@ -27,23 +27,23 @@ final class PhoneNumber {
   @XmlAttribute
   public final Type type;
 
-  @SuppressWarnings("unused") // Used by JAXB.
-  private PhoneNumber() {
-    this("", Type.OTHER);
-  }
-
   PhoneNumber(String number, @Nullable Type type) {
     this.number = number;
     this.type = type;
   }
 
-  @Override public boolean equals(Object o) {
-    return o instanceof PhoneNumber
-        && ((PhoneNumber) o).number.equals(number)
-        && ((PhoneNumber) o).type.equals(type);
+@SuppressWarnings("unused") // Used by JAXB.
+  private PhoneNumber() {
+    this("", Type.OTHER);
   }
 
-  @Override public int hashCode() {
+@Override public boolean equals(Object o) {
+    return o instanceof PhoneNumber
+        && ((PhoneNumber) o).number.equals(number)
+        && ((PhoneNumber) o).type == type;
+  }
+
+@Override public int hashCode() {
     return Arrays.asList(number, type).hashCode();
   }
 }

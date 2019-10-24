@@ -27,7 +27,16 @@ import static org.junit.Assert.assertNotNull;
 public final class Java8DefaultStaticMethodsInValidationTest {
   @Rule public final MockWebServer server = new MockWebServer();
 
-  interface Example {
+  @Test public void test() {
+    Retrofit retrofit = new Retrofit.Builder()
+        .baseUrl(server.url("/"))
+        .addConverterFactory(new ToStringConverterFactory())
+        .validateEagerly(true)
+        .build();
+    assertNotNull(retrofit.create(Example.class));
+  }
+
+interface Example {
     @GET("/") Call<String> user(@Query("name") String name);
 
     default Call<String> user() {
@@ -37,14 +46,5 @@ public final class Java8DefaultStaticMethodsInValidationTest {
     static String staticMethod() {
       return "Hi";
     }
-  }
-
-  @Test public void test() {
-    Retrofit retrofit = new Retrofit.Builder()
-        .baseUrl(server.url("/"))
-        .addConverterFactory(new ToStringConverterFactory())
-        .validateEagerly(true)
-        .build();
-    assertNotNull(retrofit.create(Example.class));
   }
 }
